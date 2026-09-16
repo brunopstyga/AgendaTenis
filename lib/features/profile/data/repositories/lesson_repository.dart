@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-
 import 'package:injectable/injectable.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/lesson_slots_dao.dart';
@@ -27,6 +26,7 @@ class LessonRepository implements ILessonRepository {
   @override
   Future<void> addSlot({
     required String id,
+    int? userId,
     required String title,
     required String date,
     required String timeSlot,
@@ -40,12 +40,13 @@ class LessonRepository implements ILessonRepository {
   }) async {
     final companion = LessonSlotsCompanion(
       id: Value(id),
+      userId: Value(userId),
       title: Value(title),
       date: Value(date),
       timeSlot: Value(timeSlot),
-      totalSpots: Value(totalSpots),
+      totalSpots5: Value(totalSpots),
       availableSpots: Value(availableSpots),
-      isBooked: const Value(false),
+      isBooked: Value(isBooked),
       studentName: Value(studentName),
       studentPhone: Value(studentPhone),
       studentEmail: Value(studentEmail),
@@ -57,6 +58,7 @@ class LessonRepository implements ILessonRepository {
   @override
   Future<void> updateLesson({
     required String id,
+    int? userId,
     required String title,
     required String date,
     required String timeSlot,
@@ -70,21 +72,20 @@ class LessonRepository implements ILessonRepository {
   }) async {
     final lessonSlot = LessonSlot(
       id: id,
+      userId: userId,
       title: title,
       date: date,
       timeSlot: timeSlot,
-      totalSpots: totalSpots,
+      totalSpots5: totalSpots,
       availableSpots: availableSpots,
       isBooked: isBooked,
       studentName: studentName,
       studentPhone: studentPhone,
       studentEmail: studentEmail,
       price: price,
-
     );
     await _lessonSlotsDao.updateSlot(lessonSlot);
   }
-
 
   // Eliminar un turno por su ID
   @override

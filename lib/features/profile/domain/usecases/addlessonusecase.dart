@@ -9,6 +9,7 @@ class AddLessonUseCase {
 
   Future<void> call({
     required String id,
+    required int? userId,
     required String title,
     required String date,
     required String timeSlot,
@@ -22,6 +23,7 @@ class AddLessonUseCase {
   }) {
     return _repository.addSlot(
       id: id,
+      userId: userId,
       title: title,
       date: date,
       timeSlot: timeSlot,

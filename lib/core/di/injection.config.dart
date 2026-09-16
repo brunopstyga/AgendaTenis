@@ -31,6 +31,8 @@ import '../../features/profile/domain/usecases/configurationdata/save_schedule_u
     as _i742;
 import '../../features/profile/domain/usecases/deletelessonusecase.dart'
     as _i303;
+import '../../features/profile/domain/usecases/flowmanager/studentflowmanager.dart'
+    as _i794;
 import '../../features/profile/domain/usecases/loginuser/login_user_usecase.dart'
     as _i1004;
 import '../../features/profile/domain/usecases/loginuser/register_user_usecase.dart'
@@ -68,6 +70,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i897.LoginDao>(
       () => registerModule.loginDao(gh<_i982.AppDatabase>()),
     );
+    gh.factory<_i794.StudentFlowManager>(
+      () => _i794.StudentFlowManager(gh<_i982.AppDatabase>()),
+    );
     gh.lazySingleton<_i212.RepositoryLoginUser>(
       () => _i857.LoginDataRepositoryImpl(gh<_i897.LoginDao>()),
     );
@@ -80,14 +85,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i262.ILessonRepository>(
       () => _i350.LessonRepository(gh<_i969.LessonSlotsDao>()),
     );
+    gh.lazySingleton<_i431.AvailabilityRepository>(
+      () => _i214.AvailabilityRepositoryImpl(gh<_i282.AvailabilityDao>()),
+    );
     gh.factory<_i600.LoginBloc>(
       () => _i600.LoginBloc(
         loginUserUseCase: gh<_i1004.LoginUserUseCase>(),
         registerUserUseCase: gh<_i359.RegisterUserUseCase>(),
+        studentFlowManager: gh<_i794.StudentFlowManager>(),
       ),
-    );
-    gh.lazySingleton<_i431.AvailabilityRepository>(
-      () => _i214.AvailabilityRepositoryImpl(gh<_i282.AvailabilityDao>()),
     );
     gh.factory<_i68.GetScheduleUseCase>(
       () => _i68.GetScheduleUseCase(gh<_i431.AvailabilityRepository>()),

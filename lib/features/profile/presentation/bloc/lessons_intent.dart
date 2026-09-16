@@ -4,6 +4,7 @@ class LoadLessons extends LessonsIntent {}
 
 class AddLessonIntent extends LessonsIntent {
   final String id;
+  final int? userId;
   final String title;
   final String date;
   final String timeSlot;
@@ -17,6 +18,7 @@ class AddLessonIntent extends LessonsIntent {
 
   AddLessonIntent({
     required this.id,
+    this.userId,
     required this.title,
     required this.date,
     required this.timeSlot,
@@ -32,6 +34,7 @@ class AddLessonIntent extends LessonsIntent {
 
 class UpdateLessonIntent extends LessonsIntent {
   final String id;
+  final int? userId;
   final String title;
   final String date;
   final String timeSlot;
@@ -46,6 +49,7 @@ class UpdateLessonIntent extends LessonsIntent {
 
   UpdateLessonIntent({
     required this.id,
+    this.userId,
     required this.title,
     required this.date,
     required this.timeSlot,

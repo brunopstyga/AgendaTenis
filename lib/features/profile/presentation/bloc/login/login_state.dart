@@ -10,7 +10,8 @@ class LoginLoading extends LoginState {}
 
 class LoginSuccess extends LoginState {
   final UserEntity user;
-  LoginSuccess(this.user);
+  final bool needsOnboarding;
+  LoginSuccess(this.user, {this.needsOnboarding = false});
 }
 
 class RegisterSuccess extends LoginState {}

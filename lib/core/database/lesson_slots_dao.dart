@@ -21,4 +21,10 @@ class LessonSlotsDao extends DatabaseAccessor<AppDatabase> with _$LessonSlotsDao
   Future<bool> updateSlot(LessonSlot slot) => update(lessonSlots).replace(slot);
 
   // Eliminar un turno por su ID
-  Future<int> deleteSlot(String id) => (delete(lessonSlots)..where((tbl) => tbl.id.equals(id))).go();}
+  Future<int> deleteSlot(String id) => (delete(lessonSlots)..where((tbl) => tbl.id.equals(id))).go();
+
+  // Obtener turnos por ID de usuario (dentro de la clase)
+  Future<List<LessonSlot>> getLessonsByUserId(int userId) {
+    return (select(lessonSlots)..where((tbl) => tbl.userId.equals(userId))).get();
+  }
+}

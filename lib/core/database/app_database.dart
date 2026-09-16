@@ -25,7 +25,6 @@ part 'app_database.g.dart';
     LoginDao,
   ],
 )
-@DriftDatabase(tables: [LessonSlots])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

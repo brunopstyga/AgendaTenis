@@ -14,11 +14,17 @@ import '../util/input_validators.dart';
 class StudentModalForm extends StatefulWidget {
   final String selectedDay;
   final dynamic slotToEdit;
+  final int? currentUserId;
+  final String? currentUserEmail;
+  final LessonsBloc lessonsBloc;
 
   const StudentModalForm({
     super.key,
     required this.selectedDay,
     this.slotToEdit,
+    this.currentUserId,
+    this.currentUserEmail,
+    required this.lessonsBloc,
   });
 
   @override
@@ -299,11 +305,12 @@ class _StudentModalFormState extends State<StudentModalForm> {
                                 final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
                                 final displayTitle = fullName.isEmpty ? 'Clase - $_currentSelectedDay' : fullName;
                                 final parsedPrice = double.tryParse(_priceController.text) ?? 0.0;
-                                final bloc = context.read<LessonsBloc>();
+                                final bloc = getIt<LessonsBloc>();
 
                                 if (widget.slotToEdit == null) {
-                                  bloc.add(AddLessonIntent(
+                                  widget.lessonsBloc.add(AddLessonIntent(
                                     id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                    userId: widget.currentUserId,
                                     title: displayTitle,
                                     date: _currentSelectedDay,
                                     timeSlot: _selectedTimeSlot ?? '08:00 AM',
@@ -312,11 +319,11 @@ class _StudentModalFormState extends State<StudentModalForm> {
                                     isBooked: true,
                                     studentName: fullName,
                                     studentPhone: _phoneController.text,
-                                    studentEmail: null,
+                                    studentEmail: widget.currentUserEmail,
                                     price: parsedPrice,
                                   ));
                                 } else {
-                                  bloc.add(UpdateLessonIntent(
+                                  widget.lessonsBloc.add(UpdateLessonIntent(
                                     id: widget.slotToEdit.id,
                                     title: displayTitle,
                                     date: _currentSelectedDay,

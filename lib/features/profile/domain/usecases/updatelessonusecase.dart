@@ -9,6 +9,7 @@ class UpdateLessonUseCase {
 
   Future<void> call({
     required String id,
+    required int? userId,
     required String title,
     required String date,
     required String timeSlot,
@@ -22,6 +23,7 @@ class UpdateLessonUseCase {
   }) async {
     return await _repository.updateLesson(
       id: id,
+      userId: userId,
       title: title,
       date: date,
       timeSlot: timeSlot,

@@ -47,6 +47,7 @@ class LessonsBloc extends Bloc<LessonsIntent, LessonsState> {
     try {
       await _addLessonUseCase(
         id: event.id,
+        userId: event.userId,
         title: event.title,
         date: event.date,
         timeSlot: event.timeSlot,
@@ -67,6 +68,7 @@ class LessonsBloc extends Bloc<LessonsIntent, LessonsState> {
     try {
       await _updateLessonUseCase(
         id: event.id,
+        userId: event.userId,
         title: event.title,
         date: event.date,
         timeSlot: event.timeSlot,

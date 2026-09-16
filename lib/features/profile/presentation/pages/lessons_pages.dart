@@ -157,7 +157,9 @@ class _LessonsPageState extends State<LessonsPage> {
       isScrollControlled: true,
       builder: (_) => BlocProvider.value(
         value: lessonsBloc,
-        child: StudentModalForm(selectedDay: _selectedDayName, slotToEdit: slotToEdit),
+        child: StudentModalForm(selectedDay: _selectedDayName,
+            slotToEdit: slotToEdit, currentUserId: widget.currentUser?.id,
+            currentUserEmail: widget.currentUser?.email, lessonsBloc: lessonsBloc),
       ),
     );
   }
@@ -183,6 +185,7 @@ class _LessonsPageState extends State<LessonsPage> {
         title: Text(_isTeacher ? 'Agenda (Profesor)' : 'Agenda (Alumno)'),
       ),
       drawer: AppDrawer(
+        isTeacher: _isTeacher,
         onLoginLocal: () => _handleLoginLocal(context),
         onLoginGmail: _handleLoginGmail,
         onLoginApple: _handleLoginApple,

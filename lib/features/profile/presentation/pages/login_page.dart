@@ -6,6 +6,7 @@ import '../bloc/lessons_bloc.dart';
 import '../bloc/login/login_bloc.dart';
 import '../bloc/login/login_intent.dart';
 import '../bloc/login/login_state.dart';
+import '../components/student_modal_form.dart';
 import 'lessons_pages.dart';
 
 
@@ -54,6 +55,46 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  String _getCurrentDayName() {
+    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    return days[DateTime.now().weekday - 1];
+  }
+
+  // Función para mostrar el modal obligatorio de onboarding a alumnos nuevos
+  void _showMandatoryOnboardingModal(BuildContext context, int userId, String userEmail) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Impide cerrar tocando fuera del modal
+      builder: (BuildContext dialogContext) {
+        // Envolvemos el diálogo en un BlocProvider para proveer el LessonsBloc que exige el formulario
+        return BlocProvider(
+          create: (context) => getIt<LessonsBloc>(),
+          child: Builder(
+            builder: (innerContext) {
+              return WillPopScope(
+                onWillPop: () async => false, // Impide cerrar con el botón "Atrás"
+                child: AlertDialog(
+                  title: const Text('¡Bienvenido! Elige tu primer turno'),
+                  content: SingleChildScrollView(
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: StudentModalForm(
+                        selectedDay: _getCurrentDayName(), // 👈 Ahora pasa el nombre correcto del día
+                        currentUserId: userId,
+                        currentUserEmail: userEmail,
+                        lessonsBloc: BlocProvider.of<LessonsBloc>(innerContext), // 👈 Se lo inyectamos aquí
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,22 +102,46 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('¡Bienvenido ${state.user.email}!')),
-            );
-
-            // Navega a la LessonsPage limpiando el historial y pasando el usuario logueado
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder: (_) => BlocProvider(
-                  create: (context) => getIt<LessonsBloc>(),
-                  child: LessonsPage(currentUser: state.user),
+            // 1. Verificamos si es el Administrador
+            if (state.user.email == 'admin@tennis.com') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('¡Bienvenido Administrador!')),
+              );
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (context) => getIt<LessonsBloc>(),
+                    child: LessonsPage(currentUser: state.user),
+                  ),
                 ),
-              ),
-                  (route) => false,
-            );
-
+                    (route) => false,
+              );
+            }
+            // 2. Verificamos si es un alumno nuevo que necesita onboarding obligatorio
+            else if (state.needsOnboarding) {
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   const SNackBar(content: Text('¡Bienvenido! Por favor registra tu primer turno.')),
+              // );
+              // Abrimos el modal obligatorio de registro de turno
+              _showMandatoryOnboardingModal(context, state.user.id, state.user.email);
+            }
+            // 3. Alumno existente que ya tiene turnos asignados
+            else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('¡Bienvenido ${state.user.email}!')),
+              );
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (context) => getIt<LessonsBloc>(),
+                    child: LessonsPage(currentUser: state.user),
+                  ),
+                ),
+                    (route) => false,
+              );
+            }
           } else if (state is RegisterSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('¡Registro exitoso! Ya puedes iniciar sesión.')),

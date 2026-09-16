@@ -6,6 +6,7 @@ abstract class ILessonRepository {
   Future<List<LessonSlot>> getSlots();
   Future<void> addSlot({
     required String id,
+    required int? userId,
     required String title,
     required String date,
     required String timeSlot,
@@ -19,6 +20,7 @@ abstract class ILessonRepository {
   });
 Future<void> updateLesson({
   required String id,
+  required int? userId,
   required String title,
   required String date,
   required String timeSlot,
