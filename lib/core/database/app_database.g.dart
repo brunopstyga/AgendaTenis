@@ -482,6 +482,28 @@ class $LessonSlotsTable extends LessonSlots
     requiredDuringInsert: false,
     defaultValue: const Constant(0.0),
   );
+  static const VerificationMeta _levelMeta = const VerificationMeta('level');
+  @override
+  late final GeneratedColumn<String> level = GeneratedColumn<String>(
+    'level',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Básico'),
+  );
+  static const VerificationMeta _classTypeMeta = const VerificationMeta(
+    'classType',
+  );
+  @override
+  late final GeneratedColumn<String> classType = GeneratedColumn<String>(
+    'class_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Grupal'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -496,6 +518,8 @@ class $LessonSlotsTable extends LessonSlots
     studentPhone,
     studentEmail,
     price,
+    level,
+    classType,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -605,6 +629,18 @@ class $LessonSlotsTable extends LessonSlots
         price.isAcceptableOrUnknown(data['price']!, _priceMeta),
       );
     }
+    if (data.containsKey('level')) {
+      context.handle(
+        _levelMeta,
+        level.isAcceptableOrUnknown(data['level']!, _levelMeta),
+      );
+    }
+    if (data.containsKey('class_type')) {
+      context.handle(
+        _classTypeMeta,
+        classType.isAcceptableOrUnknown(data['class_type']!, _classTypeMeta),
+      );
+    }
     return context;
   }
 
@@ -662,6 +698,14 @@ class $LessonSlotsTable extends LessonSlots
         DriftSqlType.double,
         data['${effectivePrefix}price'],
       )!,
+      level: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}level'],
+      )!,
+      classType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}class_type'],
+      )!,
     );
   }
 
@@ -684,6 +728,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
   final String? studentPhone;
   final String? studentEmail;
   final double price;
+  final String level;
+  final String classType;
   const LessonSlot({
     required this.id,
     this.userId,
@@ -697,6 +743,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
     this.studentPhone,
     this.studentEmail,
     required this.price,
+    required this.level,
+    required this.classType,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -721,6 +769,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
       map['student_email'] = Variable<String>(studentEmail);
     }
     map['price'] = Variable<double>(price);
+    map['level'] = Variable<String>(level);
+    map['class_type'] = Variable<String>(classType);
     return map;
   }
 
@@ -746,6 +796,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
           ? const Value.absent()
           : Value(studentEmail),
       price: Value(price),
+      level: Value(level),
+      classType: Value(classType),
     );
   }
 
@@ -767,6 +819,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
       studentPhone: serializer.fromJson<String?>(json['studentPhone']),
       studentEmail: serializer.fromJson<String?>(json['studentEmail']),
       price: serializer.fromJson<double>(json['price']),
+      level: serializer.fromJson<String>(json['level']),
+      classType: serializer.fromJson<String>(json['classType']),
     );
   }
   @override
@@ -785,6 +839,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
       'studentPhone': serializer.toJson<String?>(studentPhone),
       'studentEmail': serializer.toJson<String?>(studentEmail),
       'price': serializer.toJson<double>(price),
+      'level': serializer.toJson<String>(level),
+      'classType': serializer.toJson<String>(classType),
     };
   }
 
@@ -801,6 +857,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
     Value<String?> studentPhone = const Value.absent(),
     Value<String?> studentEmail = const Value.absent(),
     double? price,
+    String? level,
+    String? classType,
   }) => LessonSlot(
     id: id ?? this.id,
     userId: userId.present ? userId.value : this.userId,
@@ -814,6 +872,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
     studentPhone: studentPhone.present ? studentPhone.value : this.studentPhone,
     studentEmail: studentEmail.present ? studentEmail.value : this.studentEmail,
     price: price ?? this.price,
+    level: level ?? this.level,
+    classType: classType ?? this.classType,
   );
   LessonSlot copyWithCompanion(LessonSlotsCompanion data) {
     return LessonSlot(
@@ -839,6 +899,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
           ? data.studentEmail.value
           : this.studentEmail,
       price: data.price.present ? data.price.value : this.price,
+      level: data.level.present ? data.level.value : this.level,
+      classType: data.classType.present ? data.classType.value : this.classType,
     );
   }
 
@@ -856,7 +918,9 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
           ..write('studentName: $studentName, ')
           ..write('studentPhone: $studentPhone, ')
           ..write('studentEmail: $studentEmail, ')
-          ..write('price: $price')
+          ..write('price: $price, ')
+          ..write('level: $level, ')
+          ..write('classType: $classType')
           ..write(')'))
         .toString();
   }
@@ -875,6 +939,8 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
     studentPhone,
     studentEmail,
     price,
+    level,
+    classType,
   );
   @override
   bool operator ==(Object other) =>
@@ -891,7 +957,9 @@ class LessonSlot extends DataClass implements Insertable<LessonSlot> {
           other.studentName == this.studentName &&
           other.studentPhone == this.studentPhone &&
           other.studentEmail == this.studentEmail &&
-          other.price == this.price);
+          other.price == this.price &&
+          other.level == this.level &&
+          other.classType == this.classType);
 }
 
 class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
@@ -907,6 +975,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
   final Value<String?> studentPhone;
   final Value<String?> studentEmail;
   final Value<double> price;
+  final Value<String> level;
+  final Value<String> classType;
   final Value<int> rowid;
   const LessonSlotsCompanion({
     this.id = const Value.absent(),
@@ -921,6 +991,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
     this.studentPhone = const Value.absent(),
     this.studentEmail = const Value.absent(),
     this.price = const Value.absent(),
+    this.level = const Value.absent(),
+    this.classType = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LessonSlotsCompanion.insert({
@@ -936,6 +1008,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
     this.studentPhone = const Value.absent(),
     this.studentEmail = const Value.absent(),
     this.price = const Value.absent(),
+    this.level = const Value.absent(),
+    this.classType = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -956,6 +1030,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
     Expression<String>? studentPhone,
     Expression<String>? studentEmail,
     Expression<double>? price,
+    Expression<String>? level,
+    Expression<String>? classType,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -971,6 +1047,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
       if (studentPhone != null) 'student_phone': studentPhone,
       if (studentEmail != null) 'student_email': studentEmail,
       if (price != null) 'price': price,
+      if (level != null) 'level': level,
+      if (classType != null) 'class_type': classType,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -988,6 +1066,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
     Value<String?>? studentPhone,
     Value<String?>? studentEmail,
     Value<double>? price,
+    Value<String>? level,
+    Value<String>? classType,
     Value<int>? rowid,
   }) {
     return LessonSlotsCompanion(
@@ -1003,6 +1083,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
       studentPhone: studentPhone ?? this.studentPhone,
       studentEmail: studentEmail ?? this.studentEmail,
       price: price ?? this.price,
+      level: level ?? this.level,
+      classType: classType ?? this.classType,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1046,6 +1128,12 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
     if (price.present) {
       map['price'] = Variable<double>(price.value);
     }
+    if (level.present) {
+      map['level'] = Variable<String>(level.value);
+    }
+    if (classType.present) {
+      map['class_type'] = Variable<String>(classType.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1067,6 +1155,8 @@ class LessonSlotsCompanion extends UpdateCompanion<LessonSlot> {
           ..write('studentPhone: $studentPhone, ')
           ..write('studentEmail: $studentEmail, ')
           ..write('price: $price, ')
+          ..write('level: $level, ')
+          ..write('classType: $classType, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1712,6 +1802,8 @@ typedef $$LessonSlotsTableCreateCompanionBuilder =
       Value<String?> studentPhone,
       Value<String?> studentEmail,
       Value<double> price,
+      Value<String> level,
+      Value<String> classType,
       Value<int> rowid,
     });
 typedef $$LessonSlotsTableUpdateCompanionBuilder =
@@ -1728,6 +1820,8 @@ typedef $$LessonSlotsTableUpdateCompanionBuilder =
       Value<String?> studentPhone,
       Value<String?> studentEmail,
       Value<double> price,
+      Value<String> level,
+      Value<String> classType,
       Value<int> rowid,
     });
 
@@ -1819,6 +1913,16 @@ class $$LessonSlotsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get classType => $composableBuilder(
+    column: $table.classType,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$LoginUsersTableFilterComposer get userId {
     final $$LoginUsersTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -1907,6 +2011,16 @@ class $$LessonSlotsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get level => $composableBuilder(
+    column: $table.level,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get classType => $composableBuilder(
+    column: $table.classType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$LoginUsersTableOrderingComposer get userId {
     final $$LoginUsersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -1983,6 +2097,12 @@ class $$LessonSlotsTableAnnotationComposer
   GeneratedColumn<double> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
 
+  GeneratedColumn<String> get level =>
+      $composableBuilder(column: $table.level, builder: (column) => column);
+
+  GeneratedColumn<String> get classType =>
+      $composableBuilder(column: $table.classType, builder: (column) => column);
+
   $$LoginUsersTableAnnotationComposer get userId {
     final $$LoginUsersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -2047,6 +2167,8 @@ class $$LessonSlotsTableTableManager
                 Value<String?> studentPhone = const Value.absent(),
                 Value<String?> studentEmail = const Value.absent(),
                 Value<double> price = const Value.absent(),
+                Value<String> level = const Value.absent(),
+                Value<String> classType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LessonSlotsCompanion(
                 id: id,
@@ -2061,6 +2183,8 @@ class $$LessonSlotsTableTableManager
                 studentPhone: studentPhone,
                 studentEmail: studentEmail,
                 price: price,
+                level: level,
+                classType: classType,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2077,6 +2201,8 @@ class $$LessonSlotsTableTableManager
                 Value<String?> studentPhone = const Value.absent(),
                 Value<String?> studentEmail = const Value.absent(),
                 Value<double> price = const Value.absent(),
+                Value<String> level = const Value.absent(),
+                Value<String> classType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LessonSlotsCompanion.insert(
                 id: id,
@@ -2091,6 +2217,8 @@ class $$LessonSlotsTableTableManager
                 studentPhone: studentPhone,
                 studentEmail: studentEmail,
                 price: price,
+                level: level,
+                classType: classType,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

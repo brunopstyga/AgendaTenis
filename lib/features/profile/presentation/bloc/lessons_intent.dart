@@ -15,6 +15,8 @@ class AddLessonIntent extends LessonsIntent {
   final String? studentPhone;
   final String? studentEmail;
   final double price;
+  final String level;
+  final String classType;
 
   AddLessonIntent({
     required this.id,
@@ -29,6 +31,8 @@ class AddLessonIntent extends LessonsIntent {
     this.studentPhone,
     this.studentEmail,
     required this.price,
+    required this.level,
+    required this.classType,
   });
 }
 
@@ -45,7 +49,8 @@ class UpdateLessonIntent extends LessonsIntent {
   final String? studentPhone;
   final String? studentEmail;
   final double price;
-
+  final String level;
+  final String classType;
 
   UpdateLessonIntent({
     required this.id,
@@ -60,6 +65,8 @@ class UpdateLessonIntent extends LessonsIntent {
     this.studentPhone,
     this.studentEmail,
     required this.price,
+    required this.level,
+    required this.classType,
   });
 }
 

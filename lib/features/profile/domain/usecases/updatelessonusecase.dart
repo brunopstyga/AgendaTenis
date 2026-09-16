@@ -20,6 +20,8 @@ class UpdateLessonUseCase {
     String? studentPhone,
     String? studentEmail,
     required double price,
+    required String level,
+    required String classType,
   }) async {
     return await _repository.updateLesson(
       id: id,
@@ -34,6 +36,8 @@ class UpdateLessonUseCase {
       studentPhone: studentPhone,
       studentEmail: studentEmail,
       price: price,
+      level: level,
+      classType: classType,
     );
   }
 }

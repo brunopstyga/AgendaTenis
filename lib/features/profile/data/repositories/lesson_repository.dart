@@ -37,6 +37,8 @@ class LessonRepository implements ILessonRepository {
     String? studentPhone,
     String? studentEmail,
     required double price,
+    String? level,
+    String? classType,
   }) async {
     final companion = LessonSlotsCompanion(
       id: Value(id),
@@ -51,6 +53,8 @@ class LessonRepository implements ILessonRepository {
       studentPhone: Value(studentPhone),
       studentEmail: Value(studentEmail),
       price: Value(price),
+      level: Value(level ?? 'Básico'),
+      classType: Value(classType ?? 'Grupal'),
     );
     await _lessonSlotsDao.insertSlot(companion);
   }
@@ -69,6 +73,8 @@ class LessonRepository implements ILessonRepository {
     String? studentPhone,
     String? studentEmail,
     required double price,
+    String? level,
+    String? classType,
   }) async {
     final lessonSlot = LessonSlot(
       id: id,
@@ -83,6 +89,8 @@ class LessonRepository implements ILessonRepository {
       studentPhone: studentPhone,
       studentEmail: studentEmail,
       price: price,
+      level: 'Básico',
+      classType: 'Grupal',
     );
     await _lessonSlotsDao.updateSlot(lessonSlot);
   }

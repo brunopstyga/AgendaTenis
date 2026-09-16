@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 class AppDrawer extends StatelessWidget {
   final bool isTeacher;
   final VoidCallback? onLoginLocal;
-  final VoidCallback? onLoginGmail;
-  final VoidCallback? onLoginApple;
   final VoidCallback? onShowDailySchedule;
   final VoidCallback? onShowWeeklySchedule;
   final VoidCallback? onConfigureAvailability;
@@ -14,8 +12,6 @@ class AppDrawer extends StatelessWidget {
     super.key,
     required this.isTeacher,
     this.onLoginLocal,
-    this.onLoginGmail,
-    this.onLoginApple,
     this.onShowDailySchedule,
     this.onShowWeeklySchedule,
     this.onConfigureAvailability,

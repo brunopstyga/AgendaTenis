@@ -8,6 +8,7 @@ import '../bloc/login/login_intent.dart';
 import '../bloc/login/login_state.dart';
 import '../components/student_modal_form.dart';
 import 'lessons_pages.dart';
+import 'onboarding_page.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -120,11 +121,13 @@ class _LoginPageState extends State<LoginPage> {
             }
             // 2. Verificamos si es un alumno nuevo que necesita onboarding obligatorio
             else if (state.needsOnboarding) {
-              // ScaffoldMessenger.of(context).showSnackBar(
-              //   const SNackBar(content: Text('¡Bienvenido! Por favor registra tu primer turno.')),
-              // );
-              // Abrimos el modal obligatorio de registro de turno
-              _showMandatoryOnboardingModal(context, state.user.id, state.user.email);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardingPage(user: state.user),
+                ),
+                    (route) => false,
+              );
             }
             // 3. Alumno existente que ya tiene turnos asignados
             else {

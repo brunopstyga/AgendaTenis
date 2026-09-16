@@ -17,6 +17,8 @@ abstract class ILessonRepository {
     String? studentPhone,
     String? studentEmail,
     required double price,
+    required String level,
+    required String classType,
   });
 Future<void> updateLesson({
   required String id,
@@ -31,6 +33,8 @@ Future<void> updateLesson({
   String? studentPhone,
   String? studentEmail,
   required double price,
+  required String level,
+  required String classType,
 });
 Future<void> deleteSlot(String id);
 }

@@ -10,6 +10,7 @@ import '../bloc/lessons_bloc.dart';
 import '../bloc/lessons_intent.dart';
 import '../util/AvailabilityConstants.dart';
 import '../util/input_validators.dart';
+import 'dart:developer' as developer;
 
 class StudentModalForm extends StatefulWidget {
   final String selectedDay;
@@ -41,6 +42,15 @@ class _StudentModalFormState extends State<StudentModalForm> {
   late String _currentSelectedDay;
 
   String? _selectedTimeSlot;
+
+  // Estados para Nivel y Tipo de Clase
+  String _selectedLevel = 'Básico';
+  String _selectedClassType = 'Grupal';
+
+  final List<String> _levelOptions = ['Básico', 'Intermedio', 'Avanzado', 'Competencia'];
+
+  final List<String> _classTypeOptions = ['Grupal', 'Individual', 'Individual Exclusivo'];
+
   List<Map<String, dynamic>> _daySlotsData = [];
   List<String> _validTimeSlots = [];
 
@@ -53,6 +63,16 @@ class _StudentModalFormState extends State<StudentModalForm> {
 
     final initialPrice = widget.slotToEdit?.price ?? 0.0;
     _priceController = TextEditingController(text: initialPrice > 0 ? initialPrice.toStringAsFixed(0) : '');
+
+    // Inicializamos nivel y tipo de clase si estamos editando
+    if (widget.slotToEdit != null) {
+      if (widget.slotToEdit.level != null && _levelOptions.contains(widget.slotToEdit.level)) {
+        _selectedLevel = widget.slotToEdit.level;
+      }
+      if (widget.slotToEdit.classType != null && _classTypeOptions.contains(widget.slotToEdit.classType)) {
+        _selectedClassType = widget.slotToEdit.classType;
+      }
+    }
 
     _selectedDate = DateTime.now();
     _currentSelectedDay = widget.selectedDay;
@@ -73,7 +93,6 @@ class _StudentModalFormState extends State<StudentModalForm> {
     super.dispose();
   }
 
-  // Convierte un DateTime al nombre del día en español para que coincida con las keys del mapa
   String _getDayName(DateTime date) {
     const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     return days[date.weekday - 1];
@@ -95,7 +114,6 @@ class _StudentModalFormState extends State<StudentModalForm> {
     }
   }
 
-  // Lógica central para procesar y desglosar los horarios del día actual
   void _processSlotsForDay(String dayName, AvailabilityState state) {
     if (state is AvailabilityLoaded) {
       _daySlotsData = state.schedule[dayName] ?? state.schedule[dayName.toLowerCase()] ?? [];
@@ -132,17 +150,14 @@ class _StudentModalFormState extends State<StudentModalForm> {
 
       _validTimeSlots = extractedSlots;
 
-      // Si no hay horarios configurados para este día, usamos la lista general por defecto
       if (_validTimeSlots.isEmpty) {
         _validTimeSlots = List.from(AvailabilityConstants.hoursRange);
       }
 
-      // Si estamos editando y el slot actual no está en la lista, lo agregamos para no romper la UI
       if (widget.slotToEdit != null && !_validTimeSlots.contains(widget.slotToEdit.timeSlot)) {
         _validTimeSlots.add(widget.slotToEdit.timeSlot);
       }
 
-      // Asignamos una selección inicial válida si aún no hay una
       if (_validTimeSlots.isNotEmpty && (_selectedTimeSlot == null || !_validTimeSlots.contains(_selectedTimeSlot))) {
         _selectedTimeSlot = widget.slotToEdit?.timeSlot ?? _validTimeSlots.first;
         _updatePriceForSelectedSlot(_selectedTimeSlot!);
@@ -150,8 +165,73 @@ class _StudentModalFormState extends State<StudentModalForm> {
     }
   }
 
+  // 🛡️ Función centralizada para procesar el guardado
+  void _guardarAlumno({required bool seguirAgregando}) {
+    if (_formKey.currentState!.validate()) {
+      final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
+      final displayTitle = fullName.isEmpty ? 'Clase - $_currentSelectedDay' : fullName;
+      final parsedPrice = double.tryParse(_priceController.text) ?? 0.0;
+
+      // 👈 Si es individual o individual exclusivo, el cupo máximo es 1; si es grupal, es 4
+      final maxSpots = (_selectedClassType == 'Individual' || _selectedClassType == 'Individual Exclusivo') ? 1 : 4;
+      final availableSpots = maxSpots > 1 ? maxSpots - 1 : 0;
+
+      if (widget.slotToEdit == null) {
+        widget.lessonsBloc.add(AddLessonIntent(
+          id: DateTime.now().millisecondsSinceEpoch.toString() + (_nameController.text.hashCode.toString()),
+          userId: widget.currentUserId,
+          title: displayTitle,
+          date: _currentSelectedDay,
+          timeSlot: _selectedTimeSlot ?? '08:00 AM',
+          totalSpots: maxSpots,
+          availableSpots: availableSpots,
+          isBooked: true,
+          studentName: fullName,
+          studentPhone: _phoneController.text,
+          studentEmail: widget.currentUserEmail,
+          price: parsedPrice,
+          level: _selectedLevel,
+          classType: _selectedClassType,
+        ));
+      } else {
+        widget.lessonsBloc.add(UpdateLessonIntent(
+          id: widget.slotToEdit.id,
+          title: displayTitle,
+          date: _currentSelectedDay,
+          timeSlot: _selectedTimeSlot ?? widget.slotToEdit.timeSlot,
+          totalSpots: maxSpots,
+          availableSpots: widget.slotToEdit.availableSpots,
+          isBooked: true,
+          studentName: fullName,
+          studentPhone: _phoneController.text,
+          studentEmail: widget.slotToEdit.studentEmail,
+          price: parsedPrice,
+          level: _selectedLevel,
+          classType: _selectedClassType,
+        ));
+      }
+
+      if (seguirAgregando) {
+        setState(() {
+          _nameController.clear();
+          _surnameController.clear();
+          _phoneController.clear();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Alumno guardado! Ya puedes ingresar al siguiente.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        Navigator.pop(context);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    developer.log("OPCIONES DE CLASE CARGADAS: $_classTypeOptions");
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocProvider(
@@ -212,10 +292,45 @@ class _StudentModalFormState extends State<StudentModalForm> {
                         validator: InputValidators.validatePhone,
                       ),
                       const SizedBox(height: 16),
+
+                      // Dropdown para Nivel
+                      DropdownButtonFormField<String>(
+                        value: _selectedLevel,
+                        decoration: const InputDecoration(
+                          labelText: 'Nivel de Clase',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _levelOptions.map((level) {
+                          return DropdownMenuItem(value: level, child: Text(level));
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedLevel = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Dropdown para Tipo de Clase (con la nueva opción)
+                      DropdownButtonFormField<String>(
+                        value: _selectedClassType,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de Clase',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _classTypeOptions.map((type) {
+                          return DropdownMenuItem(value: type, child: Text(type));
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedClassType = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
                       Row(
-                        mainAxisAlignment: MediaQuery.of(context).size.width > 0
-                            ? MainAxisAlignment.spaceBetween
-                            : MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Fecha: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
@@ -232,10 +347,8 @@ class _StudentModalFormState extends State<StudentModalForm> {
                               if (picked != null && picked != _selectedDate) {
                                 setState(() {
                                   _selectedDate = picked;
-                                  // Actualizamos el nombre del día basado en la nueva fecha seleccionada
                                   _currentSelectedDay = _getDayName(picked);
 
-                                  // Volvemos a procesar los slots si el Bloc ya tiene la data cargada
                                   if (state is AvailabilityLoaded) {
                                     _processSlotsForDay(_currentSelectedDay, state);
                                   }
@@ -291,62 +404,55 @@ class _StudentModalFormState extends State<StudentModalForm> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      Center(
-                        child: SizedBox(
-                          width: 200,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
-                                final displayTitle = fullName.isEmpty ? 'Clase - $_currentSelectedDay' : fullName;
-                                final parsedPrice = double.tryParse(_priceController.text) ?? 0.0;
-                                final bloc = getIt<LessonsBloc>();
 
-                                if (widget.slotToEdit == null) {
-                                  widget.lessonsBloc.add(AddLessonIntent(
-                                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                    userId: widget.currentUserId,
-                                    title: displayTitle,
-                                    date: _currentSelectedDay,
-                                    timeSlot: _selectedTimeSlot ?? '08:00 AM',
-                                    totalSpots: 4,
-                                    availableSpots: 3,
-                                    isBooked: true,
-                                    studentName: fullName,
-                                    studentPhone: _phoneController.text,
-                                    studentEmail: widget.currentUserEmail,
-                                    price: parsedPrice,
-                                  ));
-                                } else {
-                                  widget.lessonsBloc.add(UpdateLessonIntent(
-                                    id: widget.slotToEdit.id,
-                                    title: displayTitle,
-                                    date: _currentSelectedDay,
-                                    timeSlot: _selectedTimeSlot ?? widget.slotToEdit.timeSlot,
-                                    totalSpots: widget.slotToEdit.totalSpots,
-                                    availableSpots: widget.slotToEdit.availableSpots,
-                                    isBooked: true,
-                                    studentName: fullName,
-                                    studentPhone: _phoneController.text,
-                                    studentEmail: widget.slotToEdit.studentEmail,
-                                    price: parsedPrice,
-                                  ));
-                                }
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: Text(
-                              widget.slotToEdit == null ? 'Guardar Reserva' : 'Actualizar Cambios',
-                              style: const TextStyle(fontSize: 15),
+                      // Botones de guardado múltiple (si es grupal nuevo) o simple
+                      if (widget.slotToEdit == null && _selectedClassType == 'Grupal') ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.green,
+                                  side: const BorderSide(color: Colors.green),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                onPressed: () => _guardarAlumno(seguirAgregando: true),
+                                child: const Text('Guardar y otro', style: TextStyle(fontSize: 13)),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                onPressed: () => _guardarAlumno(seguirAgregando: false),
+                                child: const Text('Guardar y Salir', style: TextStyle(fontSize: 13)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        Center(
+                          child: SizedBox(
+                            width: 200,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              onPressed: () => _guardarAlumno(seguirAgregando: false),
+                              child: Text(
+                                widget.slotToEdit == null ? 'Guardar Reserva' : 'Actualizar Cambios',
+                                style: const TextStyle(fontSize: 15),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 10),
                     ],
                   ),

@@ -15,6 +15,9 @@ class LessonSlots extends Table {
   TextColumn get studentEmail => text().nullable()();
   RealColumn get price => real().withDefault(const Constant(0.0))();
 
+  TextColumn get level => text().withDefault(const Constant('Básico'))();
+  TextColumn get classType => text().withDefault(const Constant('Grupal'))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

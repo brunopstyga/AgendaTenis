@@ -20,6 +20,8 @@ class AddLessonUseCase {
     String? studentPhone,
     String? studentEmail,
     required double price,
+    required String level,
+    required String classType,
   }) {
     return _repository.addSlot(
       id: id,
@@ -33,7 +35,9 @@ class AddLessonUseCase {
       studentName: studentName,
       studentPhone: studentPhone,
       studentEmail: studentEmail,
-      price: 0.0,
+      price: price,
+      level: level,
+      classType: classType,
     );
   }
 }
