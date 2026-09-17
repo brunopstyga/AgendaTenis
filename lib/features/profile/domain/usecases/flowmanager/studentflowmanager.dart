@@ -1,21 +1,22 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../../../../core/database/app_database.dart';
 
 @injectable
 class StudentFlowManager {
-  final AppDatabase _database;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  StudentFlowManager(this._database);
+  StudentFlowManager();
 
-  Future<bool> hasAssignedLesson(int userId) async {
+  Future<bool> hasAssignedLesson(String userId) async {
     try {
-      // Consulta directa a la tabla usando la API nativa de Drift
-      final userLessons = await (_database.select(_database.lessonSlots)
-        ..where((tbl) => tbl.userId.equals(userId)))
+      // Consultamos la colección 'classes' en Firestore donde el userId coincida
+      final querySnapshot = await _firestore
+          .collection('classes')
+          .where('userId', isEqualTo: userId)
+          .limit(1) // Solo necesitamos saber si existe al menos una
           .get();
 
-      return userLessons.isNotEmpty;
+      return querySnapshot.docs.isNotEmpty;
     } catch (e) {
       return false;
     }

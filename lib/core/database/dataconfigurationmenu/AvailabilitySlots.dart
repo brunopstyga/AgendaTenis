@@ -1,8 +1,33 @@
-import 'package:drift/drift.dart';
 
-class AvailabilitySlots extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get day => text()(); // Ej: 'Lunes', 'Martes'
-  TextColumn get time => text()(); // Ej: '09:00 AM'
-  RealColumn get price => real()(); // Ej: 15000.0
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class AvailabilitySlots{
+  final String id;
+  final String day;
+  final String time;
+  final double price;
+
+  AvailabilitySlots({
+    required this.id,
+    required this.day,
+    required this.time,
+    required this.price,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'day': day,
+    'time': time,
+    'price': price,
+  };
+
+  factory AvailabilitySlots.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return AvailabilitySlots(
+      id: doc.id,
+      day: data['day'] ?? '',
+      time: data['time'] ?? '',
+      price: (data['price'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 }

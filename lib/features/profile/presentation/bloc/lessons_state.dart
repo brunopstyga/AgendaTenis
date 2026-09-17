@@ -1,4 +1,6 @@
-import '../../../../core/database/app_database.dart';
+
+
+import '../../../../core/database/lesson_slots_table.dart';
 
 class LessonsState {
   final bool isLoading;

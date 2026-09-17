@@ -168,7 +168,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // 👈 Dropdown Tipo de Clase (Grupal / Individual)
                         DropdownButtonFormField<String>(
                           value: _selectedClassType,
                           decoration: const InputDecoration(
@@ -177,7 +176,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                           items: const [
                             DropdownMenuItem(value: 'Grupal', child: Text('Grupal (Máximo 4 cupos)')),
-                            DropdownMenuItem(value: 'Individual', child: Text('Individual (1 cupo exclusivo)')),
+                            DropdownMenuItem(value: 'Individual exclusivo', child: Text('Individual (1 cupo exclusivo)')),
+                            DropdownMenuItem(value: 'Individual', child: Text('Individual')),
                           ],
                           onChanged: (value) {
                             if (value != null) setState(() => _selectedClassType = value);
@@ -221,9 +221,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   // Incluimos tanto el nivel como el tipo de clase en el identificador visual
                                   final titleDetails = '$fullName ($_selectedLevel - $_selectedClassType)';
 
-                                  // Definimos los cupos según si es Grupal (máx 4) o Individual (máx 1)
-                                  final int maxSpots = _selectedClassType == 'Grupal' ? 4 : 1;
-                                  final int available = _selectedClassType == 'Grupal' ? 3 : 0;
+                                  int maxSpots;
+                                  int available;
+
+                                  if (_selectedClassType == 'Grupal') {
+                                    maxSpots = 4;
+                                    available = 3;
+                                  } else if (_selectedClassType == 'Individual') {
+                                    maxSpots = 4;
+                                    available = 3;
+                                  } else { // 'Individual exclusivo'
+                                    maxSpots = 1;
+                                    available = 0;
+                                  }
 
                                   innerContext.read<LessonsBloc>().add(AddLessonIntent(
                                     id: DateTime.now().millisecondsSinceEpoch.toString(),

@@ -10,15 +10,28 @@ import '../components/student_modal_form.dart';
 import 'lessons_pages.dart';
 import 'onboarding_page.dart';
 
-
-class LoginPage extends StatefulWidget {
+// 1. Clase contenedora que provee el LoginBloc antes de dibujar la vista
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => getIt<LoginBloc>(),
+      child: const _LoginView(),
+    );
+  }
 }
 
-class _LoginPageState extends State<LoginPage> {
+// 2. Vista interna con toda tu lógica y formularios intactos
+class _LoginView extends StatefulWidget {
+  const _LoginView();
+
+  @override
+  State<_LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<_LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
@@ -62,12 +75,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // Función para mostrar el modal obligatorio de onboarding a alumnos nuevos
-  void _showMandatoryOnboardingModal(BuildContext context, int userId, String userEmail) {
+  void _showMandatoryOnboardingModal(BuildContext context, String userId, String userEmail) {
     showDialog(
       context: context,
       barrierDismissible: false, // Impide cerrar tocando fuera del modal
       builder: (BuildContext dialogContext) {
-        // Envolvemos el diálogo en un BlocProvider para proveer el LessonsBloc que exige el formulario
         return BlocProvider(
           create: (context) => getIt<LessonsBloc>(),
           child: Builder(
@@ -80,10 +92,10 @@ class _LoginPageState extends State<LoginPage> {
                     child: SizedBox(
                       width: MediaQuery.of(context).size.width * 0.8,
                       child: StudentModalForm(
-                        selectedDay: _getCurrentDayName(), // 👈 Ahora pasa el nombre correcto del día
+                        selectedDay: _getCurrentDayName(),
                         currentUserId: userId,
                         currentUserEmail: userEmail,
-                        lessonsBloc: BlocProvider.of<LessonsBloc>(innerContext), // 👈 Se lo inyectamos aquí
+                        lessonsBloc: BlocProvider.of<LessonsBloc>(innerContext),
                       ),
                     ),
                   ),

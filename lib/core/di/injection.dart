@@ -1,9 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
-import '../database/app_database.dart';
-import '../database/dataconfigurationmenu/AvailabilityDao.dart';
-import '../database/lesson_slots_dao.dart';
-import '../database/login_user/login_dao.dart';
+
+import '../services/notification_service.dart';
 import 'injection.config.dart';
 
 final getIt = GetIt.instance;
@@ -17,15 +17,12 @@ void configureDependencies() => getIt.init();
 
 @module
 abstract class RegisterModule {
+  // Proveemos la instancia de FirebaseAuth para que Injectable la reconozca
   @lazySingleton
-  AppDatabase get appDatabase => AppDatabase();
+  FirebaseAuth get firebaseAuth => FirebaseAuth.instance;
 
+  // Proveemos la instancia de FirebaseFirestore
   @lazySingleton
-  LessonSlotsDao lessonSlotsDao(AppDatabase database) => LessonSlotsDao(database);
+  FirebaseFirestore get firestore => FirebaseFirestore.instance;
 
-  @lazySingleton
-  AvailabilityDao availabilityDao(AppDatabase database) => AvailabilityDao(database);
-
-  @lazySingleton
-  LoginDao loginDao(AppDatabase database) => LoginDao(database);
 }

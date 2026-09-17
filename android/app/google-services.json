@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "878515941599",
+    "project_id": "tennis-schedulle",
+    "storage_bucket": "tennis-schedulle.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:878515941599:android:c9c6238654ccf8e6efb96a",
+        "android_client_info": {
+          "package_name": "com.tennis.tennis_scheduler"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5rsHJwLZxRdXb6f863qbODyTllda8VRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,5 @@
-import '../../../../core/database/app_database.dart';
+
+import '../../../../core/database/lesson_slots_table.dart';
 import '../repositories/i_lesson_repository.dart';
 import 'package:injectable/injectable.dart';
 

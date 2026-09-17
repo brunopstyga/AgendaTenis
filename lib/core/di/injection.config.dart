@@ -9,6 +9,8 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:cloud_firestore/cloud_firestore.dart' as _i974;
+import 'package:firebase_auth/firebase_auth.dart' as _i59;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
@@ -46,10 +48,7 @@ import '../../features/profile/presentation/bloc/availability/availability_bloc.
 import '../../features/profile/presentation/bloc/lessons_bloc.dart' as _i234;
 import '../../features/profile/presentation/bloc/login/login_bloc.dart'
     as _i600;
-import '../database/app_database.dart' as _i982;
-import '../database/dataconfigurationmenu/AvailabilityDao.dart' as _i282;
-import '../database/lesson_slots_dao.dart' as _i969;
-import '../database/login_user/login_dao.dart' as _i897;
+import '../services/notification_service.dart' as _i941;
 import 'injection.dart' as _i464;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -60,41 +59,19 @@ extension GetItInjectableX on _i174.GetIt {
   }) {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final registerModule = _$RegisterModule();
-    gh.lazySingleton<_i982.AppDatabase>(() => registerModule.appDatabase);
-    gh.lazySingleton<_i969.LessonSlotsDao>(
-      () => registerModule.lessonSlotsDao(gh<_i982.AppDatabase>()),
-    );
-    gh.lazySingleton<_i282.AvailabilityDao>(
-      () => registerModule.availabilityDao(gh<_i982.AppDatabase>()),
-    );
-    gh.lazySingleton<_i897.LoginDao>(
-      () => registerModule.loginDao(gh<_i982.AppDatabase>()),
-    );
-    gh.factory<_i794.StudentFlowManager>(
-      () => _i794.StudentFlowManager(gh<_i982.AppDatabase>()),
-    );
-    gh.lazySingleton<_i212.RepositoryLoginUser>(
-      () => _i857.LoginDataRepositoryImpl(gh<_i897.LoginDao>()),
-    );
-    gh.factory<_i1004.LoginUserUseCase>(
-      () => _i1004.LoginUserUseCase(gh<_i212.RepositoryLoginUser>()),
-    );
-    gh.factory<_i359.RegisterUserUseCase>(
-      () => _i359.RegisterUserUseCase(gh<_i212.RepositoryLoginUser>()),
-    );
-    gh.lazySingleton<_i262.ILessonRepository>(
-      () => _i350.LessonRepository(gh<_i969.LessonSlotsDao>()),
+    gh.factory<_i794.StudentFlowManager>(() => _i794.StudentFlowManager());
+    gh.lazySingleton<_i59.FirebaseAuth>(() => registerModule.firebaseAuth);
+    gh.lazySingleton<_i974.FirebaseFirestore>(() => registerModule.firestore);
+    gh.lazySingleton<_i941.NotificationService>(
+      () => _i941.NotificationService(),
     );
     gh.lazySingleton<_i431.AvailabilityRepository>(
-      () => _i214.AvailabilityRepositoryImpl(gh<_i282.AvailabilityDao>()),
+      () => _i214.AvailabilityRepositoryImpl(),
     );
-    gh.factory<_i600.LoginBloc>(
-      () => _i600.LoginBloc(
-        loginUserUseCase: gh<_i1004.LoginUserUseCase>(),
-        registerUserUseCase: gh<_i359.RegisterUserUseCase>(),
-        studentFlowManager: gh<_i794.StudentFlowManager>(),
-      ),
+    gh.lazySingleton<_i212.RepositoryLoginUser>(
+      () => _i857.LoginDataRepositoryImpl(),
     );
+    gh.lazySingleton<_i262.ILessonRepository>(() => _i350.LessonRepository());
     gh.factory<_i68.GetScheduleUseCase>(
       () => _i68.GetScheduleUseCase(gh<_i431.AvailabilityRepository>()),
     );
@@ -113,10 +90,23 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i368.WatchLessonsUseCase>(
       () => _i368.WatchLessonsUseCase(gh<_i262.ILessonRepository>()),
     );
+    gh.factory<_i1004.LoginUserUseCase>(
+      () => _i1004.LoginUserUseCase(gh<_i212.RepositoryLoginUser>()),
+    );
+    gh.factory<_i359.RegisterUserUseCase>(
+      () => _i359.RegisterUserUseCase(gh<_i212.RepositoryLoginUser>()),
+    );
     gh.factory<_i780.AvailabilityBloc>(
       () => _i780.AvailabilityBloc(
         gh<_i68.GetScheduleUseCase>(),
         gh<_i742.SaveScheduleUseCase>(),
+      ),
+    );
+    gh.factory<_i600.LoginBloc>(
+      () => _i600.LoginBloc(
+        loginUserUseCase: gh<_i1004.LoginUserUseCase>(),
+        registerUserUseCase: gh<_i359.RegisterUserUseCase>(),
+        studentFlowManager: gh<_i794.StudentFlowManager>(),
       ),
     );
     gh.factory<_i234.LessonsBloc>(

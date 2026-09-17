@@ -15,7 +15,7 @@ import 'dart:developer' as developer;
 class StudentModalForm extends StatefulWidget {
   final String selectedDay;
   final dynamic slotToEdit;
-  final int? currentUserId;
+  final String? currentUserId;
   final String? currentUserEmail;
   final LessonsBloc lessonsBloc;
 
@@ -165,21 +165,29 @@ class _StudentModalFormState extends State<StudentModalForm> {
     }
   }
 
-  // 🛡️ Función centralizada para procesar el guardado
+
   void _guardarAlumno({required bool seguirAgregando}) {
     if (_formKey.currentState!.validate()) {
       final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
       final displayTitle = fullName.isEmpty ? 'Clase - $_currentSelectedDay' : fullName;
       final parsedPrice = double.tryParse(_priceController.text) ?? 0.0;
 
-      // 👈 Si es individual o individual exclusivo, el cupo máximo es 1; si es grupal, es 4
       final maxSpots = (_selectedClassType == 'Individual' || _selectedClassType == 'Individual Exclusivo') ? 1 : 4;
       final availableSpots = maxSpots > 1 ? maxSpots - 1 : 0;
 
-      if (widget.slotToEdit == null) {
+      final user = widget.currentUserId;
+      if (user == null) {
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: No hay un usuario activo.')),
+        );
+        return;
+      }
+
+      if (widget.slotToEdit == null ) {
         widget.lessonsBloc.add(AddLessonIntent(
           id: DateTime.now().millisecondsSinceEpoch.toString() + (_nameController.text.hashCode.toString()),
-          userId: widget.currentUserId,
+          userId: user,
           title: displayTitle,
           date: _currentSelectedDay,
           timeSlot: _selectedTimeSlot ?? '08:00 AM',
@@ -196,6 +204,7 @@ class _StudentModalFormState extends State<StudentModalForm> {
       } else {
         widget.lessonsBloc.add(UpdateLessonIntent(
           id: widget.slotToEdit.id,
+          userId: user,
           title: displayTitle,
           date: _currentSelectedDay,
           timeSlot: _selectedTimeSlot ?? widget.slotToEdit.timeSlot,
@@ -311,7 +320,7 @@ class _StudentModalFormState extends State<StudentModalForm> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Dropdown para Tipo de Clase (con la nueva opción)
+                      // Dropdown para Tipo de Clase
                       DropdownButtonFormField<String>(
                         value: _selectedClassType,
                         decoration: const InputDecoration(
@@ -405,7 +414,7 @@ class _StudentModalFormState extends State<StudentModalForm> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Botones de guardado múltiple (si es grupal nuevo) o simple
+                      // Botones de guardado múltiple o simple
                       if (widget.slotToEdit == null && _selectedClassType == 'Grupal') ...[
                         Row(
                           children: [

@@ -1,14 +1,12 @@
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/dataconfigurationmenu/AvailabilityDao.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/repositories/AvailabilityRepository.dart';
 
-
 @LazySingleton(as: AvailabilityRepository)
 class AvailabilityRepositoryImpl implements AvailabilityRepository {
-  final AvailabilityDao _dao;
-
-  AvailabilityRepositoryImpl(this._dao);
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _collection = 'config';
+  final String _docId = 'availability_schedule'; // Un documento único para guardar la configuración
 
   // Horarios hardcodeados por defecto (fallback)
   final Map<String, List<Map<String, dynamic>>> _defaultSchedule = {
@@ -42,43 +40,41 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
 
   @override
   Future<Map<String, List<Map<String, dynamic>>>> getSchedule() async {
-    final dbSlots = await _dao.getAllSlots();
+    try {
+      final docSnapshot = await _firestore.collection(_collection).doc(_docId).get();
 
-    if (dbSlots.isEmpty) {
+      if (!docSnapshot.exists || docSnapshot.data() == null) {
+        return _defaultSchedule;
+      }
+
+      final data = docSnapshot.data()!['schedule'] as Map<String, dynamic>?;
+      if (data == null || data.isEmpty) {
+        return _defaultSchedule;
+      }
+
+      // Convertimos el mapa de Firestore al formato que usa tu app
+      Map<String, List<Map<String, dynamic>>> scheduleMap = {};
+      data.forEach((day, slots) {
+        scheduleMap[day] = (slots as List).map((slot) {
+          return {
+            'time': slot['time'].toString(),
+            'price': (slot['price'] as num).toDouble(),
+          };
+        }).toList();
+      });
+
+      return scheduleMap;
+    } catch (e) {
       return _defaultSchedule;
     }
-
-    final Map<String, List<Map<String, dynamic>>> scheduleMap = {
-      'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': []
-    };
-
-    for (var slot in dbSlots) {
-      if (scheduleMap.containsKey(slot.day)) {
-        scheduleMap[slot.day]!.add({
-          'time': slot.time,
-          'price': slot.price,
-        });
-      }
-    }
-
-    return scheduleMap;
   }
 
   @override
   Future<void> saveSchedule(Map<String, List<Map<String, dynamic>>> newSchedule) async {
-    await _dao.deleteAllSlots();
-
-    for (var entry in newSchedule.entries) {
-      final day = entry.key;
-      for (var slot in entry.value) {
-        await _dao.insertSlot(
-          AvailabilitySlotsCompanion.insert(
-            day: day,
-            time: slot['time'],
-            price: slot['price'],
-          ),
-        );
-      }
-    }
+    // Guardamos la disponibilidad completa en un documento de Firestore para que los alumnos la lean
+    await _firestore.collection(_collection).doc(_docId).set({
+      'schedule': newSchedule,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

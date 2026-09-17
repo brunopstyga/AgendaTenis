@@ -9,7 +9,7 @@ class AddLessonUseCase {
 
   Future<void> call({
     required String id,
-    required int? userId,
+    required String userId,
     required String title,
     required String date,
     required String timeSlot,

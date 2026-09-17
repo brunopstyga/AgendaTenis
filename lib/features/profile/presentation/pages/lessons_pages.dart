@@ -15,15 +15,28 @@ import '../../domain/entity/user_entity.dart';
 import 'configure_availability_page.dart';
 import 'daily_schedule_page.dart';
 
-class LessonsPage extends StatefulWidget {
+class LessonsPage extends StatelessWidget {
   final UserEntity? currentUser;
   const LessonsPage({super.key, this.currentUser});
 
   @override
-  State<LessonsPage> createState() => _LessonsPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<LessonsBloc>(
+      create: (context) => getIt<LessonsBloc>()..add(LoadLessons()),
+      child: _LessonsView(currentUser: currentUser),
+    );
+  }
 }
 
-class _LessonsPageState extends State<LessonsPage> {
+class _LessonsView extends StatefulWidget {
+  final UserEntity? currentUser;
+  const _LessonsView({this.currentUser});
+
+  @override
+  State<_LessonsView> createState() => _LessonsViewState();
+}
+
+class _LessonsViewState extends State<_LessonsView> {
   final ScrollController _scrollController = ScrollController();
 
   late List<DateTime> _dateRange;
@@ -47,7 +60,6 @@ class _LessonsPageState extends State<LessonsPage> {
       for (var date in _dateRange) date: GlobalKey(),
     };
 
-    context.read<LessonsBloc>().add(LoadLessons());
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelectedDate());
   }
 
@@ -206,8 +218,8 @@ class _LessonsPageState extends State<LessonsPage> {
       floatingActionButton: _isTeacher
           ? FloatingActionButton(
         onPressed: () => _showAddStudentModal(context),
-        tooltip: 'Inscribir Alumno',
-        child: const Icon(Icons.person_add),
+        tooltip: _isTeacher ? 'Inscribir Alumno' : 'Reservar Turno',
+        child: Icon(_isTeacher ? Icons.person_add : Icons.add),
       )
           : null,
     );
