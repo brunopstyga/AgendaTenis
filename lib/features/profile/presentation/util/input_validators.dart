@@ -18,7 +18,15 @@ class _TimeInputFormatter extends TextInputFormatter {
   }
 }
 
+
 class InputValidators {
+
+  static String getCurrentDayName() {
+    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    return days[DateTime.now().weekday - 1];
+  }
+
+
   // Solo permite letras y espacios (para Nombre y Apellido)
   static TextInputFormatter get onlyLetters => FilteringTextInputFormatter.allow(
     RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]'),

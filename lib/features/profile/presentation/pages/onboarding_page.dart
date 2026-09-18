@@ -9,6 +9,7 @@ import '../bloc/availability/AvailabilityIntent.dart';
 import '../util/AvailabilityConstants.dart';
 import '../pages/lessons_pages.dart';
 import '../../domain/entity/user_entity.dart';
+import '../util/input_validators.dart';
 
 class OnboardingPage extends StatefulWidget {
   final UserEntity user;
@@ -38,7 +39,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   void initState() {
     super.initState();
-    _currentSelectedDay = _getCurrentDayName();
+    _currentSelectedDay = InputValidators.getCurrentDayName();
   }
 
   @override
@@ -47,11 +48,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _surnameController.dispose();
     _phoneController.dispose();
     super.dispose();
-  }
-
-  String _getCurrentDayName() {
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return days[DateTime.now().weekday - 1];
   }
 
   void _processAvailability(AvailabilityState state) {

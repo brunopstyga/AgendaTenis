@@ -7,6 +7,7 @@ import '../bloc/login/login_bloc.dart';
 import '../bloc/login/login_intent.dart';
 import '../bloc/login/login_state.dart';
 import '../components/student_modal_form.dart';
+import '../util/input_validators.dart';
 import 'lessons_pages.dart';
 import 'onboarding_page.dart';
 
@@ -35,6 +36,7 @@ class _LoginViewState extends State<_LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  bool _obscurePassword = true;
 
   bool _isRegistering = false; // Alternar entre Login y Registro
 
@@ -69,11 +71,6 @@ class _LoginViewState extends State<_LoginView> {
     }
   }
 
-  String _getCurrentDayName() {
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return days[DateTime.now().weekday - 1];
-  }
-
   // Función para mostrar el modal obligatorio de onboarding a alumnos nuevos
   void _showMandatoryOnboardingModal(BuildContext context, String userId, String userEmail) {
     showDialog(
@@ -92,7 +89,7 @@ class _LoginViewState extends State<_LoginView> {
                     child: SizedBox(
                       width: MediaQuery.of(context).size.width * 0.8,
                       child: StudentModalForm(
-                        selectedDay: _getCurrentDayName(),
+                        selectedDay: InputValidators.getCurrentDayName(),
                         currentUserId: userId,
                         currentUserEmail: userEmail,
                         lessonsBloc: BlocProvider.of<LessonsBloc>(innerContext),
@@ -191,11 +188,30 @@ class _LoginViewState extends State<_LoginView> {
                       decoration: const InputDecoration(labelText: 'Correo Electrónico', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 16),
+
+                    // --- CAMPO DE CONTRASEÑA ACTUALIZADO ---
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Contraseña', border: OutlineInputBorder()),
+                      obscureText: _obscurePassword, // Se oculta o muestra según la variable
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        border: const OutlineInputBorder(),
+                        // Ícono interactivo para alternar la visibilidad a la derecha
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword; // Cambia el estado
+                            });
+                          },
+                        ),
+                      ),
                     ),
+                    // ----------------------------------------
+
                     const SizedBox(height: 24),
                     if (isLoading)
                       const CircularProgressIndicator()
