@@ -33,6 +33,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   double _basePriceFromTeacher = 20.0;
 
   List<String> _availableTimeSlots = [];
+  Map<String, double> _teacherClassPrices = {};
 
   @override
   void initState() {
@@ -176,8 +177,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                           items: const [
                             DropdownMenuItem(value: 'Grupal', child: Text('Grupal (Máximo 4 cupos)')),
-                            DropdownMenuItem(value: 'Individual exclusivo', child: Text('Individual (1 cupo exclusivo)')),
                             DropdownMenuItem(value: 'Individual', child: Text('Individual')),
+                            DropdownMenuItem(value: 'Individual Exclusivo', child: Text('Individual Exclusivo')),
                           ],
                           onChanged: (value) {
                             if (value != null) setState(() => _selectedClassType = value);
@@ -218,7 +219,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
                                   final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
-                                  // Incluimos tanto el nivel como el tipo de clase en el identificador visual
                                   final titleDetails = '$fullName ($_selectedLevel - $_selectedClassType)';
 
                                   int maxSpots;

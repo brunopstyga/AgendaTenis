@@ -1,6 +1,7 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../core/di/injection.dart';
 import '../bloc/availability/AvailabilityIntent.dart';
 import '../bloc/availability/availability_bloc.dart';
@@ -26,25 +27,62 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
     'Domingo': [],
   };
 
-  // Valores seleccionados para inicio, fin, día y precio
+  // Mapa para almacenar los precios por tipo de clase: Simple, Grupal, Simple Excluyente
+  final Map<String, double> _classTypePrices = {
+    'Individual': 15000.0,
+    'Grupal': 12000.0,
+    'Individual Exclusivo': 20000.0,
+  };
+
+  // Controladores y estados para los precios de clases
+  String _selectedClassType = 'Individual';
+  final TextEditingController _classPriceController = TextEditingController(text: '15000');
+
+  // Valores seleccionados para hora desde, hasta y día
   String _startTime = AvailabilityConstants.hoursRange.first;
-  String _endTime = AvailabilityConstants.hoursRange[1]; // Por defecto la siguiente hora
+  String _endTime = AvailabilityConstants.hoursRange[1];
   String _selectedDay = AvailabilityConstants.daysOfWeek.first;
-  final TextEditingController _priceController = TextEditingController(text: '15000');
 
-  // Método auxiliar para convertir "08:00 AM" a un índice o valor comparable si deseas validar rangos,
-  // o simplemente validamos por posición en la lista de constantes.
-  void _addTimeRangeSlot() {
-    final priceError = InputValidators.validatePrice(_priceController.text);
+  @override
+  void initState() {
+    super.initState();
+    // Actualizamos el input del precio cuando cambia el tipo de clase seleccionado por defecto
+    _classPriceController.text = _classTypePrices[_selectedClassType]!.toStringAsFixed(0);
+  }
 
+  @override
+  void dispose() {
+    _classPriceController.dispose();
+    super.dispose();
+  }
+
+  void _saveClassTypePrice() {
+    developer.log("--- INTENTANDO ACTUALIZAR PRECIO DE CLASE ---");
+    developer.log("Tipo de clase seleccionado: '$_selectedClassType'");
+    developer.log("Texto ingresado en el input: '${_classPriceController.text}'");
+
+    final priceError = InputValidators.validatePrice(_classPriceController.text);
     if (priceError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(priceError)),
-      );
+      developer.log("Error de validación del precio: $priceError");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(priceError)));
       return;
     }
 
-    // Validar que la hora de inicio sea anterior a la de fin usando los índices de la lista
+    final double price = double.parse(_classPriceController.text.replaceAll(',', '.'));
+
+    setState(() {
+      _classTypePrices[_selectedClassType] = price;
+    });
+
+    developer.log("Precio actualizado exitosamente en memoria: Map actual -> $_classTypePrices");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Precio para "$_selectedClassType" actualizado a \$$price')),
+    );
+  }
+
+  void _addTimeRangeSlot() {
+    // Validar que la hora de inicio sea anterior a la de fin
     final startIndex = AvailabilityConstants.hoursRange.indexOf(_startTime);
     final endIndex = AvailabilityConstants.hoursRange.indexOf(_endTime);
 
@@ -55,7 +93,9 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
       return;
     }
 
-    final double price = double.parse(_priceController.text.replaceAll(',', '.'));
+    // Tomamos como referencia el precio configurado para la clase "Simple" o general por defecto,
+    // o puedes adaptarlo según lo que necesite tu slot. Usaremos el precio de la clase seleccionada actualmente.
+    final double currentPrice = _classTypePrices[_selectedClassType] ?? 15000.0;
     final rangeText = '$_startTime - $_endTime';
 
     setState(() {
@@ -63,9 +103,9 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
       if (!exists) {
         _workingSchedule[_selectedDay]!.add({
           'time': rangeText,
-          'price': price,
+          'price': currentPrice,
+          'classType': _selectedClassType, // Guardamos el tipo de clase asociado si lo deseas
         });
-
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Este rango horario ya existe para ese día')),
@@ -81,32 +121,33 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
   }
 
   @override
-  void dispose() {
-    _priceController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<AvailabilityBloc>()..add(LoadAvailabilityIntent()),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Configurar Días y Horarios'),
+          title: const Text('Configurar Precios y Horarios'),
           backgroundColor: Colors.green.shade700,
           foregroundColor: Colors.white,
         ),
         body: BlocConsumer<AvailabilityBloc, AvailabilityState>(
           listener: (context, state) {
             if (state is AvailabilityLoaded) {
-              setState(() {
-                _workingSchedule.clear();
-                _workingSchedule.addAll(state.schedule);
-              });
+              // Solo cargamos de Firebase si nuestro mapa local está completamente vacío
+              // (es decir, al abrir la pantalla por primera vez)
+              bool isEmpty = _workingSchedule.values.every((list) => list.isEmpty);
+
+              if (isEmpty) {
+                setState(() {
+                  _workingSchedule.clear();
+                  developer.log("CARGANDO DATOS INICIALES DE FIREBASE: ${state.schedule}");
+                  _workingSchedule.addAll(state.schedule);
+                });
+              }
             } else if (state is AvailabilitySavedSuccess) {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Horarios y precios guardados correctamente')),
+                const SnackBar(content: Text('Configuración guardada correctamente')),
               );
             } else if (state is AvailabilityError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -124,13 +165,88 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // ==========================================
+                // SECCIÓN 1: TIPOS DE CLASE Y SUS PRECIOS
+                // ==========================================
                 const Text(
-                  'Selecciona el horario de inicio, fin, el día y asigna el precio:',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  '1. Configurar Precios por Tipo de Clase',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _selectedClassType,
+                          decoration: const InputDecoration(
+                            labelText: 'Tipo de Clase',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          items: const ['Individual', 'Grupal', 'Individual Exclusivo'].map((type) {
+                            return DropdownMenuItem(value: type, child: Text(type));
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedClassType = value;
+                                _classPriceController.text = _classTypePrices[value]!.toStringAsFixed(0);
+                              });
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _classPriceController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [InputValidators.onlyPriceFormat],
+                          decoration: const InputDecoration(
+                            labelText: 'Precio para este tipo de clase',
+                            prefixText: '\$ ',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade700,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: _saveClassTypePrice,
+                            child: const Text('Actualizar Precio de Clase'),
+                          ),
+                        ),
+                        const Divider(height: 24),
+                        // Listado visual rápido de precios actuales
+                        Wrap(
+                          spacing: 8,
+                          children: _classTypePrices.entries.map((entry) {
+                            return Chip(
+                              label: Text('${entry.key}: \$${entry.value}'),
+                              backgroundColor: Colors.teal.shade50,
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-                // Panel de selección superior con Inicio, Fin y Día
+                // ==========================================
+                // SECCIÓN 2: ASIGNACIÓN DE RANGOS HORARIOS
+                // ==========================================
+                const Text(
+                  '2. Agregar Rangos Horarios por Día',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                ),
+                const SizedBox(height: 8),
                 Card(
                   elevation: 2,
                   child: Padding(
@@ -139,7 +255,6 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
                       children: [
                         Row(
                           children: [
-                            // Hora de Inicio
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 value: _startTime,
@@ -157,7 +272,6 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // Hora de Fin
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 value: _endTime,
@@ -177,41 +291,19 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            // Selector de Día
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                value: _selectedDay,
-                                decoration: const InputDecoration(
-                                  labelText: 'Día',
-                                  border: OutlineInputBorder(),
-                                  isDense: true,
-                                ),
-                                items: AvailabilityConstants.daysOfWeek.map((day) {
-                                  return DropdownMenuItem(value: day, child: Text(day));
-                                }).toList(),
-                                onChanged: (value) {
-                                  if (value != null) setState(() => _selectedDay = value);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Input de Precio
-                            Expanded(
-                              child: TextField(
-                                controller: _priceController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                inputFormatters: [InputValidators.onlyPriceFormat],
-                                decoration: const InputDecoration(
-                                  labelText: 'Precio',
-                                  prefixText: '\$ ',
-                                  border: OutlineInputBorder(),
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                          ],
+                        DropdownButtonFormField<String>(
+                          value: _selectedDay,
+                          decoration: const InputDecoration(
+                            labelText: 'Día de la Semana',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          items: AvailabilityConstants.daysOfWeek.map((day) {
+                            return DropdownMenuItem(value: day, child: Text(day));
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) setState(() => _selectedDay = value);
+                          },
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
@@ -233,7 +325,7 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Listado de días configurados con los rangos en formato Chip
+                // Listado de días configurados
                 ..._workingSchedule.entries.map((entry) {
                   final day = entry.key;
                   final slots = entry.value;
@@ -248,18 +340,17 @@ class _ConfigureAvailabilityPageState extends State<ConfigureAvailabilityPage> {
                           Text(day, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
                           const SizedBox(height: 8),
                           slots.isEmpty
-                              .toString() == 'true' && slots.isEmpty // formato seguro
                               ? const Text('Sin horarios habilitados', style: TextStyle(color: Colors.grey, fontSize: 13))
                               : Wrap(
                             spacing: 8.0,
                             runSpacing: 4.0,
                             children: slots.map((slotData) {
-                              // Aquí slotData['time'] contendrá algo como "08:00 AM - 09:00 PM"
                               final String timeRange = slotData['time'];
                               final double price = slotData['price'] ?? 0.0;
+                              final String type = slotData['classType'] ?? '';
 
                               return Chip(
-                                label: Text('$timeRange (\$$price)'),
+                                label: Text('$timeRange ${type.isNotEmpty ? "($type)" : ""} - \$$price'),
                                 deleteIcon: const Icon(Icons.close, size: 16),
                                 onDeleted: () => _removeTimeSlot(day, timeRange),
                               );

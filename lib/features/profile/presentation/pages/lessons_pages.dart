@@ -215,21 +215,31 @@ class _LessonsViewState extends State<_LessonsView> {
           Expanded(child: _buildLessonsListBuilder()),
         ],
       ),
-      floatingActionButton: _isTeacher
-          ? FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddStudentModal(context),
         tooltip: _isTeacher ? 'Inscribir Alumno' : 'Reservar Turno',
         child: Icon(_isTeacher ? Icons.person_add : Icons.add),
       )
-          : null,
     );
   }
 
   Widget _buildLessonsListBuilder() {
-    return BlocBuilder<LessonsBloc, LessonsState>(
+
+    return BlocConsumer<LessonsBloc, LessonsState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
-        if (state.isLoading) return const Center(child: CircularProgressIndicator());
-        if (state.errorMessage != null) return Center(child: Text('Error: ${state.errorMessage}'));
+        if (state.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
         final filteredSlots = state.slots.where((slot) => slot.date == _selectedDayName).toList();
         if (filteredSlots.isEmpty) {

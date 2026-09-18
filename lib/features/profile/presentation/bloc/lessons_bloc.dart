@@ -52,7 +52,7 @@ class LessonsBloc extends Bloc<LessonsIntent, LessonsState> {
     if (event.classType == 'Individual') {
       if (existingSlotsForTime.isNotEmpty) {
         emit(state.copyWith(
-            errorMessage: 'Este horario ya está ocupado o tiene turnos asignados. No se puede programar una clase individual.'
+            errorMessage: "Todos los turnos estan asignados para este horario"
         ));
         return;
       }
@@ -73,6 +73,9 @@ class LessonsBloc extends Bloc<LessonsIntent, LessonsState> {
         return;
       }
     }
+
+
+    emit(state.copyWith(errorMessage: null));
 
     final result = await _addLessonUseCase(
       id: event.id,
