@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 
+import '../../../../../core/util/result.dart';
 import '../../../domain/usecases/configurationdata/get_schedule_use_case.dart';
 import '../../../domain/usecases/configurationdata/save_schedule_use_case.dart';
 import 'AvailabilityIntent.dart';
@@ -25,11 +26,14 @@ class AvailabilityBloc extends Bloc<AvailabilityIntent, AvailabilityState> {
       Emitter<AvailabilityState> emit,
       ) async {
     emit(AvailabilityLoading());
-    try {
-      final schedule = await _getScheduleUseCase.call();
-      emit(AvailabilityLoaded(schedule));
-    } catch (e) {
-      emit(AvailabilityError(e.toString()));
+
+    final result = await _getScheduleUseCase.call();
+
+    switch (result) {
+      case Success(data: final schedule):
+        emit(AvailabilityLoaded(schedule));
+      case Failure(message: final errorMsg):
+        emit(AvailabilityError(errorMsg));
     }
   }
 
@@ -43,14 +47,22 @@ class AvailabilityBloc extends Bloc<AvailabilityIntent, AvailabilityState> {
       emit(AvailabilityLoading());
     }
 
-    try {
-      await _saveScheduleUseCase.call(event.schedule);
-      emit(AvailabilitySavedSuccess());
-      // Recargamos el estado loaded con los datos nuevos
-      final updatedSchedule = await _getScheduleUseCase.call();
-      emit(AvailabilityLoaded(updatedSchedule));
-    } catch (e) {
-      emit(AvailabilityError(e.toString()));
+    final saveResult = await _saveScheduleUseCase.call(event.schedule);
+
+    switch (saveResult) {
+      case Success():
+        emit(AvailabilitySavedSuccess());
+
+        // Recargamos el estado loaded con los datos nuevos
+        final getResult = await _getScheduleUseCase.call();
+        switch (getResult) {
+          case Success(data: final updatedSchedule):
+            emit(AvailabilityLoaded(updatedSchedule));
+          case Failure(message: final errorMsg):
+            emit(AvailabilityError(errorMsg));
+        }
+      case Failure(message: final errorMsg):
+        emit(AvailabilityError(errorMsg));
     }
   }
 }

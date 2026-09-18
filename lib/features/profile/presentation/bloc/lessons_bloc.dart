@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/util/result.dart';
 import '../../domain/usecases/addlessonusecase.dart';
 import '../../domain/usecases/deletelessonusecase.dart';
 import '../../domain/usecases/updatelessonusecase.dart';
@@ -44,93 +45,94 @@ class LessonsBloc extends Bloc<LessonsIntent, LessonsState> {
   }
 
   Future<void> _onAddLesson(AddLessonIntent event, Emitter<LessonsState> emit) async {
-    try {
-      final existingSlotsForTime = state.slots.where((s) =>
-      s.date == event.date && s.timeSlot == event.timeSlot
-      ).toList();
+    final existingSlotsForTime = state.slots.where((s) =>
+    s.date == event.date && s.timeSlot == event.timeSlot
+    ).toList();
 
-      if (event.classType == 'Individual') {
-        // Si intentan anotar una individual, el horario debe estar totalmente vacío
-        if (existingSlotsForTime.isNotEmpty) {
-          emit(state.copyWith(
-              errorMessage: 'Este horario ya está ocupado o tiene turnos asignados. No se puede programar una clase individual.'
-          ));
-          return;
-        }
-      } else if (event.classType == 'Grupal') {
-        // Si intentan anotar una grupal, verificamos que no haya una individual ocupando el lugar
-        final hasIndividual = existingSlotsForTime.any((s) => s.classType == 'Individual');
-        if (hasIndividual) {
-          emit(state.copyWith(
-              errorMessage: 'Este horario ya está reservado por una clase individual.'
-          ));
-          return;
-        }
-
-        // Verificamos que no se superen los 4 alumnos grupales permitidos
-        final groupCount = existingSlotsForTime.where((s) => s.classType == 'Grupal').length;
-        if (groupCount >= 4) {
-          emit(state.copyWith(
-              errorMessage: 'Cupo lleno: La clase grupal ya alcanzó el límite máximo de 4 alumnos para este horario.'
-          ));
-          return;
-        }
+    if (event.classType == 'Individual') {
+      if (existingSlotsForTime.isNotEmpty) {
+        emit(state.copyWith(
+            errorMessage: 'Este horario ya está ocupado o tiene turnos asignados. No se puede programar una clase individual.'
+        ));
+        return;
+      }
+    } else if (event.classType == 'Grupal') {
+      final hasIndividual = existingSlotsForTime.any((s) => s.classType == 'Individual');
+      if (hasIndividual) {
+        emit(state.copyWith(
+            errorMessage: 'Este horario ya está reservado por una clase individual.'
+        ));
+        return;
       }
 
-      // Si pasa todas las validaciones, procede a guardar la clase normalmente
-      await _addLessonUseCase(
-        id: event.id,
-        userId: event.userId,
-        title: event.title,
-        date: event.date,
-        timeSlot: event.timeSlot,
-        totalSpots: event.totalSpots,
-        availableSpots: event.availableSpots,
-        isBooked: event.isBooked,
-        studentName: event.studentName,
-        studentPhone: event.studentPhone,
-        studentEmail: event.studentEmail,
-        price: event.price,
-        level: event.level,
-        classType: event.classType,
-      );
+      final groupCount = existingSlotsForTime.where((s) => s.classType == 'Grupal').length;
+      if (groupCount >= 4) {
+        emit(state.copyWith(
+            errorMessage: 'Cupo lleno: La clase grupal ya alcanzó el límite máximo de 4 alumnos para este horario.'
+        ));
+        return;
+      }
+    }
 
-      // Limpiamos errores previos si se guardó con éxito
-      emit(state.copyWith(errorMessage: null));
+    final result = await _addLessonUseCase(
+      id: event.id,
+      userId: event.userId,
+      title: event.title,
+      date: event.date,
+      timeSlot: event.timeSlot,
+      totalSpots: event.totalSpots,
+      availableSpots: event.availableSpots,
+      isBooked: event.isBooked,
+      studentName: event.studentName,
+      studentPhone: event.studentPhone,
+      studentEmail: event.studentEmail,
+      price: event.price,
+      level: event.level,
+      classType: event.classType,
+    );
 
-    } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+    switch (result) {
+      case Success():
+        emit(state.copyWith(errorMessage: null));
+      case Failure(message: final errorMsg):
+        emit(state.copyWith(errorMessage: errorMsg));
     }
   }
 
   Future<void> _onUpdateLesson(UpdateLessonIntent event, Emitter<LessonsState> emit) async {
-    try {
-      await _updateLessonUseCase(
-        id: event.id,
-        userId: event.userId,
-        title: event.title,
-        date: event.date,
-        timeSlot: event.timeSlot,
-        totalSpots: event.totalSpots,
-        availableSpots: event.availableSpots,
-        isBooked: event.isBooked,
-        studentName: event.studentName,
-        studentPhone: event.studentPhone,
-        studentEmail: event.studentEmail,
-        price: event.price,
-        level: event.level,
-        classType: event.classType,
-      );
-    } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+    final result = await _updateLessonUseCase(
+      id: event.id,
+      userId: event.userId,
+      title: event.title,
+      date: event.date,
+      timeSlot: event.timeSlot,
+      totalSpots: event.totalSpots,
+      availableSpots: event.availableSpots,
+      isBooked: event.isBooked,
+      studentName: event.studentName,
+      studentPhone: event.studentPhone,
+      studentEmail: event.studentEmail,
+      price: event.price,
+      level: event.level,
+      classType: event.classType,
+    );
+
+    switch (result) {
+      case Success():
+        break;
+      case Failure(message: final errorMsg):
+        emit(state.copyWith(errorMessage: errorMsg));
     }
   }
 
   Future<void> _onDeleteLesson(DeleteLessonIntent event, Emitter<LessonsState> emit) async {
-    try {
-      await _deleteLessonUseCase(event.id);
-    } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+    final result = await _deleteLessonUseCase(event.id);
+
+    switch (result) {
+      case Success():
+        break;
+      case Failure(message: final errorMsg):
+        emit(state.copyWith(errorMessage: errorMsg));
     }
   }
 }

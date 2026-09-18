@@ -1,3 +1,4 @@
+import '../../../../core/util/result.dart';
 import '../repositories/i_lesson_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -8,7 +9,7 @@ class DeleteLessonUseCase {
 
   DeleteLessonUseCase(this._repository);
 
-  Future<void> call(String id) async {
+  Future<Result<void>> call(String id) async {
     return _repository.deleteSlot(id);
   }
 }

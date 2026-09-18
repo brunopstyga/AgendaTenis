@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import '../../../../core/util/result.dart';
 import '../../domain/repositories/i_lesson_repository.dart';
 
 @injectable
@@ -7,7 +8,7 @@ class UpdateLessonUseCase {
 
   UpdateLessonUseCase(this._repository);
 
-  Future<void> call({
+  Future<Result<void>> call({
     required String id,
     required String userId,
     required String title,

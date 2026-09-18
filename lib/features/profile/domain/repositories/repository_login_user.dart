@@ -1,6 +1,8 @@
+import '../../../../core/util/result.dart';
 import '../entity/user_entity.dart';
 
 abstract class RepositoryLoginUser {
-  Future<UserEntity?> login(String email, String password);
-  Future<bool> register(String email, String password, String? name);
+  Future<Result<UserEntity>> login(String email, String password);
+
+  Future<Result<bool>> register(String email, String password, String? name);
 }

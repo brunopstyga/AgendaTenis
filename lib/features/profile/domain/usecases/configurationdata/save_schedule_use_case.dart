@@ -1,5 +1,6 @@
 
 import 'package:injectable/injectable.dart';
+import '../../../../../core/util/result.dart';
 import '../../repositories/AvailabilityRepository.dart';
 @injectable
 class SaveScheduleUseCase {
@@ -7,7 +8,7 @@ class SaveScheduleUseCase {
 
   SaveScheduleUseCase(this._repository);
 
-  Future<void> call(Map<String, List<Map<String, dynamic>>> newSchedule) async {
-    await _repository.saveSchedule(newSchedule);
+  Future<Result<void>> call(Map<String, List<Map<String, dynamic>>> newSchedule) async {
+    return await _repository.saveSchedule(newSchedule);
   }
 }
