@@ -12,8 +12,10 @@ import '../pages/login_page.dart';
 import '../bloc/login/login_bloc.dart';
 import '../../domain/entity/user_entity.dart';
 
+import '../util/input_validators.dart';
 import 'configure_availability_page.dart';
 import 'daily_schedule_page.dart';
+import 'lessons_grid_page.dart';
 
 class LessonsPage extends StatelessWidget {
   final UserEntity? currentUser;
@@ -66,11 +68,6 @@ class _LessonsViewState extends State<_LessonsView> {
   bool get _isTeacher {
     if (widget.currentUser == null) return false;
     return widget.currentUser!.email == 'admin@tennis.com';
-  }
-
-  String get _selectedDayName {
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return days[_selectedDate.weekday - 1];
   }
 
   void _scrollToSelectedDate() {
@@ -142,6 +139,26 @@ class _LessonsViewState extends State<_LessonsView> {
     );
   }
 
+  void _handleShowGridPage(BuildContext context) {
+    final lessonsBloc = context.read<LessonsBloc>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: lessonsBloc,
+          child: LessonsGridPage(
+            isTeacher: _isTeacher,
+            onLoginLocal: () => _handleLoginLocal(context),
+            onShowDailySchedule: () => _handleShowDailySchedule(context),
+            onShowWeeklySchedule: () => _handleShowWeeklySchedule(context),
+            onConfigureAvailability: () => _handleConfigureAvailability(context),
+            onLogout: () => _handleLogout(context),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _handleShowWeeklySchedule(BuildContext context) => _showSnackBar('Abriendo planilla semanal completa...');
 
   void _handleConfigureAvailability(BuildContext context) {
@@ -161,7 +178,7 @@ class _LessonsViewState extends State<_LessonsView> {
       builder: (_) => BlocProvider.value(
         value: lessonsBloc,
         child: StudentModalForm(
-          selectedDay: _selectedDayName,
+          selectedDay: InputValidators.getCurrentDayName(null),
           slotToEdit: slotToEdit,
           currentUserId: widget.currentUser?.id,
           currentUserEmail: widget.currentUser?.email,
@@ -192,6 +209,7 @@ class _LessonsViewState extends State<_LessonsView> {
       ),
       drawer: AppDrawer(
         isTeacher: _isTeacher,
+        onShowGridPage: () => _handleShowGridPage(context),
         onLoginLocal: () => _handleLoginLocal(context),
         onShowDailySchedule: _isTeacher ? () => _handleShowDailySchedule(context) : () => _showSnackBar('Acceso exclusivo para profesores'),
         onShowWeeklySchedule: _isTeacher ? () => _handleShowWeeklySchedule(context) : () => _showSnackBar('Acceso exclusivo para profesores'),
@@ -241,9 +259,11 @@ class _LessonsViewState extends State<_LessonsView> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final filteredSlots = state.slots.where((slot) => slot.date == _selectedDayName).toList();
+        final selectedDayName = InputValidators.getCurrentDayName(_selectedDate);
+        final filteredSlots = state.slots.where((slot) => slot.date == selectedDayName).toList();
+
         if (filteredSlots.isEmpty) {
-          return Center(child: Text('No hay turnos cargados para el día $_selectedDayName'));
+          return Center(child: Text('No hay turnos cargados para el día $selectedDayName'));
         }
 
         return ListView.builder(

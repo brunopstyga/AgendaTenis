@@ -34,12 +34,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
   double _basePriceFromTeacher = 20.0;
 
   List<String> _availableTimeSlots = [];
-  Map<String, double> _teacherClassPrices = {};
 
   @override
   void initState() {
     super.initState();
-    _currentSelectedDay = InputValidators.getCurrentDayName();
+    _currentSelectedDay = InputValidators.getCurrentDayName(null);
   }
 
   @override

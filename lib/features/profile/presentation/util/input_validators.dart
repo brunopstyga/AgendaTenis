@@ -21,9 +21,10 @@ class _TimeInputFormatter extends TextInputFormatter {
 
 class InputValidators {
 
-  static String getCurrentDayName() {
+  static String getCurrentDayName(DateTime? date) {
+    final targetDate = date ?? DateTime.now();
     const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return days[DateTime.now().weekday - 1];
+    return days[targetDate.weekday - 1];
   }
 
 

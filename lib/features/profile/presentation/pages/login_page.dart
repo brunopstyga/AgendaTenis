@@ -71,39 +71,39 @@ class _LoginViewState extends State<_LoginView> {
     }
   }
 
-  // Función para mostrar el modal obligatorio de onboarding a alumnos nuevos
-  void _showMandatoryOnboardingModal(BuildContext context, String userId, String userEmail) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Impide cerrar tocando fuera del modal
-      builder: (BuildContext dialogContext) {
-        return BlocProvider(
-          create: (context) => getIt<LessonsBloc>(),
-          child: Builder(
-            builder: (innerContext) {
-              return WillPopScope(
-                onWillPop: () async => false, // Impide cerrar con el botón "Atrás"
-                child: AlertDialog(
-                  title: const Text('¡Bienvenido! Elige tu primer turno'),
-                  content: SingleChildScrollView(
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: StudentModalForm(
-                        selectedDay: InputValidators.getCurrentDayName(),
-                        currentUserId: userId,
-                        currentUserEmail: userEmail,
-                        lessonsBloc: BlocProvider.of<LessonsBloc>(innerContext),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+  // // Función para mostrar el modal obligatorio de onboarding a alumnos nuevos
+  // void _showMandatoryOnboardingModal(BuildContext context, String userId, String userEmail) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false, // Impide cerrar tocando fuera del modal
+  //     builder: (BuildContext dialogContext) {
+  //       return BlocProvider(
+  //         create: (context) => getIt<LessonsBloc>(),
+  //         child: Builder(
+  //           builder: (innerContext) {
+  //             return WillPopScope(
+  //               onWillPop: () async => false, // Impide cerrar con el botón "Atrás"
+  //               child: AlertDialog(
+  //                 title: const Text('¡Bienvenido! Elige tu primer turno'),
+  //                 content: SingleChildScrollView(
+  //                   child: SizedBox(
+  //                     width: MediaQuery.of(context).size.width * 0.8,
+  //                     child: StudentModalForm(
+  //                       selectedDay: InputValidators.getCurrentDayName(null),
+  //                       currentUserId: userId,
+  //                       currentUserEmail: userEmail,
+  //                       lessonsBloc: BlocProvider.of<LessonsBloc>(innerContext),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             );
+  //           },
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {

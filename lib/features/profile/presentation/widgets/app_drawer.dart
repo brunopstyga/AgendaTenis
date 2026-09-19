@@ -2,19 +2,25 @@ import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isTeacher;
+  final bool isGridPage;
   final VoidCallback? onLoginLocal;
   final VoidCallback? onShowDailySchedule;
   final VoidCallback? onShowWeeklySchedule;
   final VoidCallback? onConfigureAvailability;
+  final VoidCallback? onShowGridPage;
+  final VoidCallback? onBackToList;
   final VoidCallback? onLogout;
 
   const AppDrawer({
     super.key,
     required this.isTeacher,
+    this.isGridPage = false,
     this.onLoginLocal,
     this.onShowDailySchedule,
     this.onShowWeeklySchedule,
     this.onConfigureAvailability,
+    this.onShowGridPage,
+    this.onBackToList,
     this.onLogout,
   });
 
@@ -34,9 +40,33 @@ class AppDrawer extends StatelessWidget {
 
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Agenda'),
-            onTap: () => Navigator.pop(context),
+            title: const Text('Agenda (Lista)'),
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              if (isGridPage && onBackToList != null) {
+                onBackToList!(); // Si estamos en la grilla, vuelve a la lista
+              }
+            },
           ),
+
+          // --- BOTÓN DINÁMICO ---
+          ListTile(
+            leading: Icon(isGridPage ? Icons.list_alt : Icons.grid_view),
+            title: Text(isGridPage ? 'Lista' : 'Grilla Semanal'),
+            onTap: () {
+              Navigator.pop(context); // Cierra el menú lateral
+              if (isGridPage) {
+                if (onBackToList != null) {
+                  onBackToList!();
+                } else {
+                  Navigator.pop(context);
+                }
+              } else {
+                if (onShowGridPage != null) onShowGridPage!();
+              }
+            },
+          ),
+          // --------------------
 
           if (isTeacher) ...[
             const Divider(),
