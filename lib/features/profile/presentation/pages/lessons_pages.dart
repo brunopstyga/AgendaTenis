@@ -274,6 +274,26 @@ class _LessonsViewState extends State<_LessonsView> {
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: ListTile(
                 onTap: _isTeacher ? () => _showAddStudentModal(context, slotToEdit: slot) : null,
+
+                leading: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  alignment: Alignment.center,
+                  width: 70,
+                  child: Text(
+                    slot.timeSlot,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green.shade800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+
                 title: Text(slot.title),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
