@@ -29,12 +29,10 @@ class StudentModalForm extends StatefulWidget {
   });
 
   @override
-  State<StudentModalForm> createState() =>
-      _StudentModalFormState();
+  State<StudentModalForm> createState() => _StudentModalFormState();
 }
 
-class _StudentModalFormState
-    extends State<StudentModalForm> {
+class _StudentModalFormState extends State<StudentModalForm> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -83,54 +81,37 @@ class _StudentModalFormState
       text: widget.slotToEdit?.studentPhone ?? '',
     );
 
-    final initialPrice =
-        widget.slotToEdit?.price ?? 0.0;
+    final initialPrice = widget.slotToEdit?.price ?? 0.0;
 
     _priceController = TextEditingController(
-      text: initialPrice > 0
-          ? initialPrice.toStringAsFixed(0)
-          : '',
+      text: initialPrice > 0 ? initialPrice.toStringAsFixed(0) : '',
     );
 
     if (widget.slotToEdit != null) {
       if (widget.slotToEdit.level != null &&
-          _levelOptions.contains(
-            widget.slotToEdit.level,
-          )) {
-        _selectedLevel =
-            widget.slotToEdit.level;
+          _levelOptions.contains(widget.slotToEdit.level)) {
+        _selectedLevel = widget.slotToEdit.level;
       }
 
       if (widget.slotToEdit.classType != null &&
-          _classTypeOptions.contains(
-            widget.slotToEdit.classType,
-          )) {
-        _selectedClassType =
-            widget.slotToEdit.classType;
+          _classTypeOptions.contains(widget.slotToEdit.classType)) {
+        _selectedClassType = widget.slotToEdit.classType;
       }
     }
 
     _selectedDate = DateTime.now();
 
-    _currentSelectedDay =
-        widget.selectedDay;
+    _currentSelectedDay = widget.selectedDay;
 
-    if (widget.slotToEdit != null &&
-        widget.slotToEdit.studentName != null) {
-      final nameParts =
-      widget.slotToEdit.studentName!
-          .split(' ');
+    if (widget.slotToEdit != null && widget.slotToEdit.studentName != null) {
+      final nameParts = widget.slotToEdit.studentName!.split(' ');
 
       if (nameParts.isNotEmpty) {
-        _nameController.text =
-            nameParts.first;
+        _nameController.text = nameParts.first;
       }
 
       if (nameParts.length > 1) {
-        _surnameController.text =
-            nameParts
-                .sublist(1)
-                .join(' ');
+        _surnameController.text = nameParts.sublist(1).join(' ');
       }
     }
   }
@@ -146,10 +127,9 @@ class _StudentModalFormState
   }
 
   void _processScheduleForDay(
-      String dayName,
-      Map<String, Map<String, dynamic>>
-      scheduleMap,
-      ) {
+    String dayName,
+    Map<String, Map<String, dynamic>> scheduleMap,
+  ) {
     Map<String, dynamic> dayData = {};
 
     String normalize(String input) {
@@ -162,129 +142,75 @@ class _StudentModalFormState
           .replaceAll('ú', 'u');
     }
 
-    final normalizedTarget =
-    normalize(dayName);
+    final normalizedTarget = normalize(dayName);
 
-    for (final entry
-    in scheduleMap.entries) {
-      if (normalize(entry.key) ==
-          normalizedTarget) {
-        dayData =
-        Map<String, dynamic>.from(
-          entry.value,
-        );
+    for (final entry in scheduleMap.entries) {
+      if (normalize(entry.key) == normalizedTarget) {
+        dayData = Map<String, dynamic>.from(entry.value);
         break;
       }
     }
 
-    developer.log(
-      'Configuración encontrada para $dayName: $dayData',
-    );
+    developer.log('Configuración encontrada para $dayName: $dayData');
 
-    final String startHour =
-        dayData['startTime'] ?? '08:00';
+    final String startHour = dayData['startTime'] ?? '08:00';
 
-    final String endHour =
-        dayData['endTime'] ?? '21:00';
+    final String endHour = dayData['endTime'] ?? '21:00';
 
-    final rawPrices =
-        dayData['prices']
-        as Map<String, dynamic>? ??
-            {};
+    final rawPrices = dayData['prices'] as Map<String, dynamic>? ?? {};
 
-    _currentDayClassPrices =
-        rawPrices.map(
-              (key, value) {
-            return MapEntry(
-              key,
-              value is num
-                  ? value.toDouble()
-                  : 0.0,
-            );
-          },
-        );
+    _currentDayClassPrices = rawPrices.map((key, value) {
+      return MapEntry(key, value is num ? value.toDouble() : 0.0);
+    });
 
-    developer.log(
-      'Precios para $dayName: $_currentDayClassPrices',
-    );
+    developer.log('Precios para $dayName: $_currentDayClassPrices');
 
     final List<String> generatedSlots = [];
 
-    final startIndex =
-    AvailabilityConstants.hoursRange
-        .indexOf(startHour);
+    final startIndex = AvailabilityConstants.hoursRange.indexOf(startHour);
 
-    final endIndex =
-    AvailabilityConstants.hoursRange
-        .indexOf(endHour);
+    final endIndex = AvailabilityConstants.hoursRange.indexOf(endHour);
 
-    if (startIndex != -1 &&
-        endIndex != -1 &&
-        startIndex < endIndex) {
-      for (
-      int i = startIndex;
-      i < endIndex;
-      i++
-      ) {
+    if (startIndex != -1 && endIndex != -1 && startIndex < endIndex) {
+      for (int i = startIndex; i < endIndex; i++) {
         generatedSlots.add(
           '${AvailabilityConstants.hoursRange[i]} - '
-              '${AvailabilityConstants.hoursRange[i + 1]}',
+          '${AvailabilityConstants.hoursRange[i + 1]}',
         );
       }
     }
 
     setState(() {
-      _validTimeSlots =
-          generatedSlots;
+      _validTimeSlots = generatedSlots;
 
       if (widget.slotToEdit != null &&
-          !_validTimeSlots.contains(
-            widget.slotToEdit.timeSlot,
-          )) {
-        _validTimeSlots.add(
-          widget.slotToEdit.timeSlot,
-        );
+          !_validTimeSlots.contains(widget.slotToEdit.timeSlot)) {
+        _validTimeSlots.add(widget.slotToEdit.timeSlot);
       }
 
       if (_validTimeSlots.isNotEmpty) {
         if (_selectedTimeSlot == null ||
-            !_validTimeSlots.contains(
-              _selectedTimeSlot,
-            )) {
+            !_validTimeSlots.contains(_selectedTimeSlot)) {
           _selectedTimeSlot =
-              widget.slotToEdit?.timeSlot ??
-                  _validTimeSlots.first;
+              widget.slotToEdit?.timeSlot ?? _validTimeSlots.first;
         }
       } else {
         _selectedTimeSlot = null;
       }
 
-      _updatePriceForClassType(
-        _selectedClassType,
-      );
+      _updatePriceForClassType(_selectedClassType);
     });
   }
 
-  void _updatePriceForClassType(
-      String classType,
-      ) {
-    final double price =
-        _currentDayClassPrices[classType] ??
-            0.0;
+  void _updatePriceForClassType(String classType) {
+    final double price = _currentDayClassPrices[classType] ?? 0.0;
 
-    developer.log(
-      'Precio para $classType: $price',
-    );
+    developer.log('Precio para $classType: $price');
 
-    _priceController.text =
-    price > 0
-        ? price.toStringAsFixed(0)
-        : '';
+    _priceController.text = price > 0 ? price.toStringAsFixed(0) : '';
   }
 
-  String? _validateTimeSlot(
-      String? timeSlot,
-      ) {
+  String? _validateTimeSlot(String? timeSlot) {
     if (timeSlot == null) {
       return 'Por favor selecciona un horario';
     }
@@ -292,216 +218,130 @@ class _StudentModalFormState
     return null;
   }
 
-  void _guardarAlumno({
-    required bool seguirAgregando,
-  }) {
-    final timeError =
-    _validateTimeSlot(
-      _selectedTimeSlot,
-    );
+  String? _isTimeSlotInPast(String? timeSlot) {
+    if (timeSlot == null) return 'Por favor selecciona un horario';
 
+    final now = DateTime.now();
+    final isToday =
+        _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+
+    if (!isToday) return null; // Si no es hoy, es válido
+
+    int selectedHour = int.tryParse(timeSlot.split(':')[0]) ?? 0;
+    if (timeSlot.toUpperCase().contains('PM') && selectedHour < 12) {
+      selectedHour += 12;
+    }
+    if (timeSlot.toUpperCase().contains('AM') && selectedHour == 12) {
+      selectedHour = 0;
+    }
+
+    if (selectedHour <= now.hour) {
+      return 'No puedes elegir un horario que ya pasó hoy';
+    }
+
+    return null;
+  }
+
+  void _guardarAlumno() {
+    final timeError = _isTimeSlotInPast(_selectedTimeSlot);
     setState(() {
-      _timeSlotErrorText =
-          timeError;
+      _timeSlotErrorText = timeError;
     });
-
     if (timeError != null) {
       return;
     }
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
-
     final fullName =
-    '${_nameController.text} '
-        '${_surnameController.text}'
-        .trim();
-
-    final displayTitle =
-    fullName.isEmpty
+        '${_nameController.text} '
+                '${_surnameController.text}'
+            .trim();
+    final displayTitle = fullName.isEmpty
         ? 'Clase - $_currentSelectedDay'
         : fullName;
 
-    final parsedPrice =
-        double.tryParse(
-          _priceController.text,
-        ) ??
-            0.0;
-
+    final parsedPrice = double.tryParse(_priceController.text) ?? 0.0;
     final maxSpots =
-    (_selectedClassType ==
-        'Individual' ||
-        _selectedClassType ==
-            'Individual Exclusivo')
+        (_selectedClassType == 'Individual' ||
+            _selectedClassType == 'Individual Exclusivo')
         ? 1
         : 4;
-
-    final availableSpots =
-    maxSpots > 1
-        ? maxSpots - 1
-        : 0;
-
-    final user =
-        widget.currentUserId;
-
+    final availableSpots = maxSpots > 1 ? maxSpots - 1 : 0;
+    final user = widget.currentUserId;
     if (user == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Error: No hay un usuario activo.',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: No hay un usuario activo.')),
       );
-
       return;
     }
-
     if (widget.slotToEdit == null) {
       widget.lessonsBloc.add(
         AddLessonIntent(
-          id: DateTime.now()
-              .millisecondsSinceEpoch
-              .toString() +
-              _nameController
-                  .text
-                  .hashCode
-                  .toString(),
-
+          id:
+              DateTime.now().millisecondsSinceEpoch.toString() +
+              _nameController.text.hashCode.toString(),
           userId: user,
-
           title: displayTitle,
-
           date: _currentSelectedDay,
-
-          timeSlot:
-          _selectedTimeSlot ?? '',
-
+          timeSlot: _selectedTimeSlot ?? '',
           totalSpots: maxSpots,
-
-          availableSpots:
-          availableSpots,
-
+          availableSpots: availableSpots,
           isBooked: true,
-
           studentName: fullName,
-
-          studentPhone:
-          _phoneController.text,
-
-          studentEmail:
-          widget.currentUserEmail,
-
+          studentPhone: _phoneController.text,
+          studentEmail: widget.currentUserEmail,
           price: parsedPrice,
-
           level: _selectedLevel,
-
-          classType:
-          _selectedClassType,
+          classType: _selectedClassType,
         ),
       );
     } else {
       widget.lessonsBloc.add(
         UpdateLessonIntent(
           id: widget.slotToEdit.id,
-
           userId: user,
-
           title: displayTitle,
-
           date: _currentSelectedDay,
-
-          timeSlot:
-          _selectedTimeSlot ??
-              widget.slotToEdit.timeSlot,
-
+          timeSlot: _selectedTimeSlot ?? widget.slotToEdit.timeSlot,
           totalSpots: maxSpots,
-
-          availableSpots:
-          widget.slotToEdit.availableSpots,
-
+          availableSpots: widget.slotToEdit.availableSpots,
           isBooked: true,
-
           studentName: fullName,
-
-          studentPhone:
-          _phoneController.text,
-
-          studentEmail:
-          widget.slotToEdit.studentEmail,
-
+          studentPhone: _phoneController.text,
+          studentEmail: widget.slotToEdit.studentEmail,
           price: parsedPrice,
-
           level: _selectedLevel,
-
-          classType:
-          _selectedClassType,
+          classType: _selectedClassType,
         ),
       );
     }
-
-    if (seguirAgregando) {
-      setState(() {
-        _nameController.clear();
-        _surnameController.clear();
-        _phoneController.clear();
-        _timeSlotErrorText = null;
-      });
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            '¡Alumno guardado! Ya puedes ingresar al siguiente.',
-          ),
-          duration:
-          Duration(seconds: 2),
-        ),
-      );
-    } else {
-      Navigator.pop(context);
-    }
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final keyboardHeight =
-        MediaQuery.of(context)
-            .viewInsets
-            .bottom;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return BlocProvider(
       create: (context) =>
-      getIt<AvailabilityBloc>()
-        ..add(
-          LoadAvailabilityIntent(),
-        ),
-      child: BlocConsumer<
-          AvailabilityBloc,
-          AvailabilityState>(
+          getIt<AvailabilityBloc>()..add(LoadAvailabilityIntent()),
+      child: BlocConsumer<AvailabilityBloc, AvailabilityState>(
         listener: (context, state) {
-          if (state
-          is AvailabilityLoaded) {
-            _processScheduleForDay(
-              _currentSelectedDay,
-              state.schedule,
-            );
+          if (state is AvailabilityLoaded) {
+            _processScheduleForDay(_currentSelectedDay, state.schedule);
           }
         },
         builder: (context, state) {
           return Container(
-            decoration:
-            const BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius:
-              BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.only(
-              bottom:
-              keyboardHeight + 24,
+              bottom: keyboardHeight + 24,
               left: 20,
               right: 20,
               top: 20,
@@ -511,357 +351,223 @@ class _StudentModalFormState
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    mainAxisSize:
-                    MainAxisSize.min,
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        widget.slotToEdit ==
-                            null
+                        widget.slotToEdit == null
                             ? 'Inscribir Alumno a Clase'
                             : 'Editar Turno / Alumno',
-                        style:
-                        const TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
-                          fontWeight:
-                          FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
-                        textAlign:
-                        TextAlign.center,
+                        textAlign: TextAlign.center,
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       TextFormField(
-                        controller:
-                        _nameController,
-                        inputFormatters: [
-                          InputValidators
-                              .onlyLetters,
-                        ],
-                        decoration:
-                        const InputDecoration(
+                        controller: _nameController,
+                        inputFormatters: [InputValidators.onlyLetters],
+                        decoration: const InputDecoration(
                           labelText: 'Nombre',
-                          border:
-                          OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            InputValidators
-                                .validateRequired(
-                              value,
-                              'Nombre',
-                            ),
+                            InputValidators.validateRequired(value, 'Nombre'),
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
                       TextFormField(
-                        controller:
-                        _surnameController,
-                        inputFormatters: [
-                          InputValidators
-                              .onlyLetters,
-                        ],
-                        decoration:
-                        const InputDecoration(
+                        controller: _surnameController,
+                        inputFormatters: [InputValidators.onlyLetters],
+                        decoration: const InputDecoration(
                           labelText: 'Apellido',
-                          border:
-                          OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
                         validator: (value) =>
-                            InputValidators
-                                .validateRequired(
-                              value,
-                              'Apellido',
-                            ),
+                            InputValidators.validateRequired(value, 'Apellido'),
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
                       TextFormField(
-                        controller:
-                        _phoneController,
-                        keyboardType:
-                        TextInputType.phone,
-                        inputFormatters: [
-                          InputValidators
-                              .onlyNumbers,
-                        ],
-                        decoration:
-                        const InputDecoration(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [InputValidators.onlyNumbers],
+                        decoration: const InputDecoration(
                           labelText: 'Teléfono',
-                          border:
-                          OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
-                        validator:
-                        InputValidators
-                            .validatePhone,
+                        validator: InputValidators.validatePhone,
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          String>(
-                        value:
-                        _selectedLevel,
-                        decoration:
-                        const InputDecoration(
-                          labelText:
-                          'Nivel de Clase',
-                          border:
-                          OutlineInputBorder(),
+                      DropdownButtonFormField<String>(
+                        value: _selectedLevel,
+                        decoration: const InputDecoration(
+                          labelText: 'Nivel de Clase',
+                          border: OutlineInputBorder(),
                         ),
                         items: _levelOptions
                             .map(
-                              (level) =>
-                              DropdownMenuItem(
+                              (level) => DropdownMenuItem(
                                 value: level,
-                                child:
-                                Text(level),
+                                child: Text(level),
                               ),
-                        )
+                            )
                             .toList(),
-                        onChanged:
-                            (value) {
-                          if (value !=
-                              null) {
+                        onChanged: (value) {
+                          if (value != null) {
                             setState(() {
-                              _selectedLevel =
-                                  value;
+                              _selectedLevel = value;
                             });
                           }
                         },
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
-                      DropdownButtonFormField<
-                          String>(
-                        value:
-                        _selectedClassType,
-                        decoration:
-                        const InputDecoration(
-                          labelText:
-                          'Tipo de Clase',
-                          border:
-                          OutlineInputBorder(),
+                      DropdownButtonFormField<String>(
+                        value: _selectedClassType,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de Clase',
+                          border: OutlineInputBorder(),
                         ),
-                        items:
-                        _classTypeOptions
+                        items: _classTypeOptions
                             .map(
-                              (type) =>
-                              DropdownMenuItem(
+                              (type) => DropdownMenuItem(
                                 value: type,
-                                child:
-                                Text(type),
+                                child: Text(type),
                               ),
-                        )
+                            )
                             .toList(),
-                        onChanged:
-                            (value) {
-                          if (value ==
-                              null) {
+                        onChanged: (value) {
+                          if (value == null) {
                             return;
                           }
 
                           setState(() {
-                            _selectedClassType =
-                                value;
+                            _selectedClassType = value;
 
-                            _updatePriceForClassType(
-                              value,
-                            );
+                            _updatePriceForClassType(value);
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
                       Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment
-                            .spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Fecha: '
-                                '${_selectedDate.day}/'
-                                '${_selectedDate.month}/'
-                                '${_selectedDate.year}',
-                            style:
-                            const TextStyle(
-                              fontWeight:
-                              FontWeight
-                                  .w500,
+                            '${_selectedDate.day}/'
+                            '${_selectedDate.month}/'
+                            '${_selectedDate.year}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
                           ),
 
                           TextButton.icon(
-                            onPressed:
-                                () async {
-                              final picked =
-                              await showDatePicker(
-                                context:
-                                context,
-                                initialDate:
-                                _selectedDate,
-                                firstDate:
-                                DateTime.now(),
-                                lastDate:
-                                DateTime.now()
-                                    .add(
-                                  const Duration(
-                                    days: 365,
-                                  ),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _selectedDate,
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 365),
                                 ),
                               );
 
-                              if (picked !=
-                                  null) {
+                              if (picked != null) {
                                 setState(() {
-                                  _selectedDate =
-                                      picked;
+                                  _selectedDate = picked;
 
                                   _currentSelectedDay =
-                                      InputValidators
-                                          .getCurrentDayName(
-                                        picked,
-                                      );
+                                      InputValidators.getCurrentDayName(picked);
                                 });
 
-                                final currentState =
-                                    context
-                                        .read<
-                                        AvailabilityBloc>()
-                                        .state;
+                                final currentState = context
+                                    .read<AvailabilityBloc>()
+                                    .state;
 
-                                if (currentState
-                                is AvailabilityLoaded) {
+                                if (currentState is AvailabilityLoaded) {
                                   _processScheduleForDay(
                                     _currentSelectedDay,
-                                    currentState
-                                        .schedule,
+                                    currentState.schedule,
                                   );
                                 }
                               }
                             },
-                            icon:
-                            const Icon(
-                              Icons
-                                  .calendar_today,
-                              size: 18,
-                            ),
-                            label:
-                            const Text(
-                              'Cambiar',
-                            ),
+                            icon: const Icon(Icons.calendar_today, size: 18),
+                            label: const Text('Cambiar'),
                           ),
                         ],
                       ),
 
-                      const SizedBox(
-                        height: 4,
-                      ),
+                      const SizedBox(height: 4),
 
                       Text(
                         'Día seleccionado: '
-                            '$_currentSelectedDay',
-                        style:
-                        const TextStyle(
-                          fontWeight:
-                          FontWeight.w500,
+                        '$_currentSelectedDay',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
                           color: Colors.grey,
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
-                      DropdownButtonFormField<
-                          String>(
-                        value: (_selectedTimeSlot !=
-                            null &&
-                            _validTimeSlots
-                                .contains(
-                              _selectedTimeSlot,
-                            ))
+                      DropdownButtonFormField<String>(
+                        value:
+                            (_selectedTimeSlot != null &&
+                                _validTimeSlots.contains(_selectedTimeSlot))
                             ? _selectedTimeSlot
-                            : (_validTimeSlots
-                            .isNotEmpty
-                            ? _validTimeSlots
-                            .first
-                            : null),
-                        decoration:
-                        InputDecoration(
-                          labelText:
-                          'Horario disponible',
-                          border:
-                          const OutlineInputBorder(),
-                          errorText:
-                          _timeSlotErrorText,
+                            : (_validTimeSlots.isNotEmpty
+                                  ? _validTimeSlots.first
+                                  : null),
+                        decoration: InputDecoration(
+                          labelText: 'Horario disponible',
+                          border: const OutlineInputBorder(),
+                          errorText: _timeSlotErrorText,
                         ),
                         items: _validTimeSlots
                             .map(
-                              (slot) =>
-                              DropdownMenuItem(
+                              (slot) => DropdownMenuItem(
                                 value: slot,
-                                child:
-                                Text(slot),
+                                child: Text(slot),
                               ),
-                        )
+                            )
                             .toList(),
-                        onChanged:
-                            (value) {
-                          if (value !=
-                              null) {
+                        onChanged: (value) {
+                          if (value != null) {
                             setState(() {
-                              _selectedTimeSlot =
-                                  value;
+                              _selectedTimeSlot = value;
 
-                              _timeSlotErrorText =
-                              null;
+                              _timeSlotErrorText = null;
                             });
                           }
                         },
                       ),
 
-                      const SizedBox(
-                        height: 12,
-                      ),
+                      const SizedBox(height: 12),
 
                       TextFormField(
-                        controller:
-                        _priceController,
+                        controller: _priceController,
                         readOnly: true,
-                        decoration:
-                        const InputDecoration(
-                          labelText:
-                          'Importe / Precio',
-                          border:
-                          OutlineInputBorder(),
+                        decoration: const InputDecoration(
+                          labelText: 'Importe / Precio',
+                          border: OutlineInputBorder(),
                           prefixText: '\$ ',
                         ),
                         validator: (value) {
-                          if (value ==
-                              null ||
-                              value
-                                  .trim()
-                                  .isEmpty) {
+                          if (value == null || value.trim().isEmpty) {
                             return 'No hay un precio configurado para este tipo de clase';
                           }
 
@@ -869,37 +575,18 @@ class _StudentModalFormState
                         },
                       ),
 
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      const SizedBox(height: 20),
 
                       ElevatedButton(
-                        style:
-                        ElevatedButton
-                            .styleFrom(
-                          backgroundColor:
-                          Colors.green
-                              .shade700,
-                          foregroundColor:
-                          Colors.white,
-                          padding:
-                          const EdgeInsets
-                              .symmetric(
-                            vertical: 14,
-                          ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        onPressed: () =>
-                            _guardarAlumno(
-                              seguirAgregando:
-                              false,
-                            ),
-                        child:
-                        const Text(
+                        onPressed: () => _guardarAlumno(),
+                        child: const Text(
                           'Guardar Alumno',
-                          style:
-                          TextStyle(
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
                     ],
