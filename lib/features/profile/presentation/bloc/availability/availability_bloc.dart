@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-
 import '../../../../../core/util/result.dart';
 import '../../../domain/usecases/configurationdata/get_schedule_use_case.dart';
 import '../../../domain/usecases/configurationdata/save_schedule_use_case.dart';
@@ -32,6 +31,7 @@ class AvailabilityBloc extends Bloc<AvailabilityIntent, AvailabilityState> {
     switch (result) {
       case Success(data: final schedule):
         emit(AvailabilityLoaded(schedule));
+
       case Failure(message: final errorMsg):
         emit(AvailabilityError(errorMsg));
     }
@@ -41,28 +41,32 @@ class AvailabilityBloc extends Bloc<AvailabilityIntent, AvailabilityState> {
       SaveAvailabilityIntent event,
       Emitter<AvailabilityState> emit,
       ) async {
-    if (state is AvailabilityLoaded) {
-      emit(AvailabilitySaving((state as AvailabilityLoaded).schedule));
-    } else {
-      emit(AvailabilityLoading());
-    }
+    emit(AvailabilitySaving(event.schedule));
 
-    final saveResult = await _saveScheduleUseCase.call(event.schedule);
+    final saveResult = await _saveAvailability(event.schedule);
 
     switch (saveResult) {
       case Success():
         emit(AvailabilitySavedSuccess());
 
-        // Recargamos el estado loaded con los datos nuevos
         final getResult = await _getScheduleUseCase.call();
+
         switch (getResult) {
           case Success(data: final updatedSchedule):
             emit(AvailabilityLoaded(updatedSchedule));
+
           case Failure(message: final errorMsg):
             emit(AvailabilityError(errorMsg));
         }
+
       case Failure(message: final errorMsg):
         emit(AvailabilityError(errorMsg));
     }
+  }
+
+  Future<Result<dynamic>> _saveAvailability(
+      Map<String, Map<String, dynamic>> schedule,
+      ) async {
+    return await _saveScheduleUseCase.call(schedule);
   }
 }

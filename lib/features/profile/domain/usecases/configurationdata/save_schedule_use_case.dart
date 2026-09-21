@@ -8,7 +8,7 @@ class SaveScheduleUseCase {
 
   SaveScheduleUseCase(this._repository);
 
-  Future<Result<void>> call(Map<String, List<Map<String, dynamic>>> newSchedule) async {
-    return await _repository.saveSchedule(newSchedule);
+  Future<Result<void>> call(Map<String, Map<String, dynamic>> schedule) async {
+    return await _repository.saveSchedule(schedule);
   }
 }

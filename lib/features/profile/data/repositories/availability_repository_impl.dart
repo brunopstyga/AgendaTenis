@@ -7,40 +7,77 @@ import '../../domain/repositories/AvailabilityRepository.dart';
 class AvailabilityRepositoryImpl implements AvailabilityRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _collection = 'config';
-  final String _docId = 'availability_schedule'; // Un documento único para guardar la configuración
+  final String _docId = 'availability_schedule'; // Un documento único para la configuración
 
-  // Horarios hardcodeados por defecto (fallback)
-  final Map<String, List<Map<String, dynamic>>> _defaultSchedule = {
-    'Lunes': [
-      {'time': '09:00 AM', 'price': 15000.0},
-      {'time': '11:00 AM', 'price': 15000.0},
-      {'time': '05:00 PM', 'price': 18000.0},
-    ],
-    'Martes': [
-      {'time': '09:00 AM', 'price': 15000.0},
-      {'time': '03:00 PM', 'price': 15000.0},
-    ],
-    'Miércoles': [
-      {'time': '09:00 AM', 'price': 15000.0},
-      {'time': '11:00 AM', 'price': 15000.0},
-      {'time': '05:00 PM', 'price': 15000.0},
-    ],
-    'Jueves': [
-      {'time': '09:00 AM', 'price': 15000.0},
-      {'time': '03:00 PM', 'price': 15000.0},
-    ],
-    'Viernes': [
-      {'time': '09:00 AM', 'price': 15000.0},
-      {'time': '11:00 AM', 'price': 15000.0},
-    ],
-    'Sábado': [
-      {'time': '10:00 AM', 'price': 20000.0},
-    ],
-    'Domingo': [],
+  // Estructura por defecto utilizando el nuevo modelo conceptual de rangos y precios
+  final Map<String, Map<String, dynamic>> _defaultSchedule = {
+    'Lunes': {
+      'startTime': '08:00',
+      'endTime': '21:00',
+      'prices': {
+        'Grupal': 15000.0,
+        'Individual': 20000.0,
+        'Individual Exclusivo': 25000.0,
+      },
+    },
+    'Martes': {
+      'startTime': '08:00',
+      'endTime': '21:00',
+      'prices': {
+        'Grupal': 15000.0,
+        'Individual': 20000.0,
+        'Individual Exclusivo': 25000.0,
+      },
+    },
+    'Miércoles': {
+      'startTime': '08:00',
+      'endTime': '21:00',
+      'prices': {
+        'Grupal': 15000.0,
+        'Individual': 20000.0,
+        'Individual Exclusivo': 25000.0,
+      },
+    },
+    'Jueves': {
+      'startTime': '08:00',
+      'endTime': '21:00',
+      'prices': {
+        'Grupal': 15000.0,
+        'Individual': 20000.0,
+        'Individual Exclusivo': 25000.0,
+      },
+    },
+    'Viernes': {
+      'startTime': '08:00',
+      'endTime': '21:00',
+      'prices': {
+        'Grupal': 15000.0,
+        'Individual': 20000.0,
+        'Individual Exclusivo': 25000.0,
+      },
+    },
+    'Sábado': {
+      'startTime': '09:00',
+      'endTime': '14:00',
+      'prices': {
+        'Grupal': 20000.0,
+        'Individual': 25000.0,
+        'Individual Exclusivo': 30000.0,
+      },
+    },
+    'Domingo': {
+      'startTime': '08:00',
+      'endTime': '21:00',
+      'prices': {
+        'Grupal': 0.0,
+        'Individual': 0.0,
+        'Individual Exclusivo': 0.0,
+      },
+    },
   };
 
   @override
-  Future<Result<Map<String, List<Map<String, dynamic>>>>> getSchedule() async {
+  Future<Result<Map<String, Map<String, dynamic>>>> getSchedule() async {
     try {
       final docSnapshot = await _firestore.collection(_collection).doc(_docId).get();
 
@@ -53,14 +90,25 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
         return Success(_defaultSchedule);
       }
 
-      Map<String, List<Map<String, dynamic>>> scheduleMap = {};
-      data.forEach((day, slots) {
-        scheduleMap[day] = (slots as List).map((slot) {
-          return {
-            'time': slot['time'].toString(),
-            'price': (slot['price'] as num).toDouble(),
+      // Mapeo seguro al nuevo formato de Mapa de Mapas
+      Map<String, Map<String, dynamic>> scheduleMap = {};
+      data.forEach((day, dayData) {
+        if (dayData is Map) {
+          final startTime = dayData['startTime']?.toString() ?? '08:00';
+          final endTime = dayData['endTime']?.toString() ?? '21:00';
+
+          final rawPrices = dayData['prices'] as Map<String, dynamic>? ?? {};
+          Map<String, double> parsedPrices = {};
+          rawPrices.forEach((classType, priceVal) {
+            parsedPrices[classType] = (priceVal as num?)?.toDouble() ?? 0.0;
+          });
+
+          scheduleMap[day] = {
+            'startTime': startTime,
+            'endTime': endTime,
+            'prices': parsedPrices,
           };
-        }).toList();
+        }
       });
 
       return Success(scheduleMap);
@@ -70,7 +118,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
   }
 
   @override
-  Future<Result<void>> saveSchedule(Map<String, List<Map<String, dynamic>>> newSchedule) async {
+  Future<Result<void>> saveSchedule(Map<String, Map<String, dynamic>> newSchedule) async {
     try {
       await _firestore.collection(_collection).doc(_docId).set({
         'schedule': newSchedule,

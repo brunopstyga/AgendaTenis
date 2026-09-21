@@ -8,7 +8,7 @@ class GetScheduleUseCase {
 
   GetScheduleUseCase(this._repository);
 
-  Future<Result<Map<String, List<Map<String, dynamic>>>>> call() async {
+  Future<Result<Map<String, Map<String, dynamic>>>> call() async {
     return await _repository.getSchedule();
   }
 }

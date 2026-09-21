@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/di/injection.dart';
 import '../bloc/availability/AvailabilityIntent.dart';
@@ -10,6 +9,7 @@ import '../bloc/lessons_bloc.dart';
 import '../bloc/lessons_intent.dart';
 import '../util/AvailabilityConstants.dart';
 import '../util/input_validators.dart';
+
 import 'dart:developer' as developer;
 
 class StudentModalForm extends StatefulWidget {
@@ -29,75 +29,109 @@ class StudentModalForm extends StatefulWidget {
   });
 
   @override
-  State<StudentModalForm> createState() => _StudentModalFormState();
+  State<StudentModalForm> createState() =>
+      _StudentModalFormState();
 }
 
-class _StudentModalFormState extends State<StudentModalForm> {
+class _StudentModalFormState
+    extends State<StudentModalForm> {
   final _formKey = GlobalKey<FormState>();
+
   late final TextEditingController _nameController;
   late final TextEditingController _surnameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _priceController;
+
   late DateTime _selectedDate;
+
   late String _currentSelectedDay;
+
   String? _timeSlotErrorText;
 
   String? _selectedTimeSlot;
 
-  // Estados para Nivel y Tipo de Clase
   String _selectedLevel = 'Básico';
+
   String _selectedClassType = 'Grupal';
 
-  final List<String> _levelOptions = ['Básico', 'Intermedio', 'Avanzado', 'Competencia'];
-  final List<String> _classTypeOptions = ['Grupal', 'Individual', 'Individual Exclusivo'];
+  final List<String> _levelOptions = [
+    'Básico',
+    'Intermedio',
+    'Avanzado',
+    'Competencia',
+  ];
 
-  List<Map<String, dynamic>> _daySlotsData = [];
+  final List<String> _classTypeOptions = [
+    'Grupal',
+    'Individual',
+    'Individual Exclusivo',
+  ];
+
   List<String> _validTimeSlots = [];
 
-  // Mapa de precios por defecto (Hardcodeados como respaldo si Firebase no tiene configuración)
-  final Map<String, double> _fallbackPrices = {
-    'Grupal': 600.0,
-    'Individual': 1400.0,
-    'Individual Exclusivo': 3000.0,
-  };
-
-  // Mapa activo de precios para el día actual
   Map<String, double> _currentDayClassPrices = {};
-  double _defaultDayPrice = 1400.0;
 
   @override
   void initState() {
     super.initState();
+
     _nameController = TextEditingController();
+
     _surnameController = TextEditingController();
-    _phoneController = TextEditingController(text: widget.slotToEdit?.studentPhone ?? '');
 
-    // Inicializamos con respaldo hardcodeado hasta que cargue Firebase
-    _currentDayClassPrices = Map.from(_fallbackPrices);
-    final initialPrice = widget.slotToEdit?.price ?? (_currentDayClassPrices[_selectedClassType] ?? 1400.0);
-    _priceController = TextEditingController(text: initialPrice > 0 ? initialPrice.toStringAsFixed(0) : '');
+    _phoneController = TextEditingController(
+      text: widget.slotToEdit?.studentPhone ?? '',
+    );
 
-    // Inicializamos nivel y tipo de clase si estamos editando
+    final initialPrice =
+        widget.slotToEdit?.price ?? 0.0;
+
+    _priceController = TextEditingController(
+      text: initialPrice > 0
+          ? initialPrice.toStringAsFixed(0)
+          : '',
+    );
+
     if (widget.slotToEdit != null) {
-      if (widget.slotToEdit.level != null && _levelOptions.contains(widget.slotToEdit.level)) {
-        _selectedLevel = widget.slotToEdit.level;
+      if (widget.slotToEdit.level != null &&
+          _levelOptions.contains(
+            widget.slotToEdit.level,
+          )) {
+        _selectedLevel =
+            widget.slotToEdit.level;
       }
-      if (widget.slotToEdit.classType != null && _classTypeOptions.contains(widget.slotToEdit.classType)) {
-        _selectedClassType = widget.slotToEdit.classType;
-        // Ajustamos el precio si estamos editando y viene el tipo de clase
-        if (widget.slotToEdit.price == null || widget.slotToEdit.price == 0) {
-          _priceController.text = (_currentDayClassPrices[_selectedClassType] ?? 1400.0).toStringAsFixed(0);
-        }
+
+      if (widget.slotToEdit.classType != null &&
+          _classTypeOptions.contains(
+            widget.slotToEdit.classType,
+          )) {
+        _selectedClassType =
+            widget.slotToEdit.classType;
       }
     }
 
     _selectedDate = DateTime.now();
-    _currentSelectedDay = widget.selectedDay;
 
-    if (widget.slotToEdit != null && widget.slotToEdit.studentName != null) {
-      final nameParts = widget.slotToEdit.studentName!.split(' ');
-      if (nameParts.isNotEmpty) _nameController.text = nameParts.first;
-      if (nameParts.length > 1) _surnameController.text = nameParts.sublist(1).join(' ');
+    _currentSelectedDay =
+        widget.selectedDay;
+
+    if (widget.slotToEdit != null &&
+        widget.slotToEdit.studentName != null) {
+      final nameParts =
+      widget.slotToEdit.studentName!
+          .split(' ');
+
+      if (nameParts.isNotEmpty) {
+        _nameController.text =
+            nameParts.first;
+      }
+
+      if (nameParts.length > 1) {
+        _surnameController.text =
+            nameParts
+                .sublist(1)
+                .join(' ');
+      }
     }
   }
 
@@ -107,238 +141,367 @@ class _StudentModalFormState extends State<StudentModalForm> {
     _surnameController.dispose();
     _phoneController.dispose();
     _priceController.dispose();
+
     super.dispose();
   }
 
-  String _getDayName(DateTime date) {
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    return days[date.weekday - 1];
-  }
+  void _processScheduleForDay(
+      String dayName,
+      Map<String, Map<String, dynamic>>
+      scheduleMap,
+      ) {
+    Map<String, dynamic> dayData = {};
 
-  void _updatePriceForSelectedSlot(String timeSlot) {
-    if (widget.slotToEdit == null) {
-      // Si tenemos un precio específico en el mapa actual para este tipo de clase, lo usamos
-      if (_currentDayClassPrices.containsKey(_selectedClassType)) {
-        final price = _currentDayClassPrices[_selectedClassType]!;
-        _priceController.text = price.toStringAsFixed(0);
-        return;
+    String normalize(String input) {
+      return input
+          .toLowerCase()
+          .replaceAll('á', 'a')
+          .replaceAll('é', 'e')
+          .replaceAll('í', 'i')
+          .replaceAll('ó', 'o')
+          .replaceAll('ú', 'u');
+    }
+
+    final normalizedTarget =
+    normalize(dayName);
+
+    for (final entry
+    in scheduleMap.entries) {
+      if (normalize(entry.key) ==
+          normalizedTarget) {
+        dayData =
+        Map<String, dynamic>.from(
+          entry.value,
+        );
+        break;
+      }
+    }
+
+    developer.log(
+      'Configuración encontrada para $dayName: $dayData',
+    );
+
+    final String startHour =
+        dayData['startTime'] ?? '08:00';
+
+    final String endHour =
+        dayData['endTime'] ?? '21:00';
+
+    final rawPrices =
+        dayData['prices']
+        as Map<String, dynamic>? ??
+            {};
+
+    _currentDayClassPrices =
+        rawPrices.map(
+              (key, value) {
+            return MapEntry(
+              key,
+              value is num
+                  ? value.toDouble()
+                  : 0.0,
+            );
+          },
+        );
+
+    developer.log(
+      'Precios para $dayName: $_currentDayClassPrices',
+    );
+
+    final List<String> generatedSlots = [];
+
+    final startIndex =
+    AvailabilityConstants.hoursRange
+        .indexOf(startHour);
+
+    final endIndex =
+    AvailabilityConstants.hoursRange
+        .indexOf(endHour);
+
+    if (startIndex != -1 &&
+        endIndex != -1 &&
+        startIndex < endIndex) {
+      for (
+      int i = startIndex;
+      i < endIndex;
+      i++
+      ) {
+        generatedSlots.add(
+          '${AvailabilityConstants.hoursRange[i]} - '
+              '${AvailabilityConstants.hoursRange[i + 1]}',
+        );
+      }
+    }
+
+    setState(() {
+      _validTimeSlots =
+          generatedSlots;
+
+      if (widget.slotToEdit != null &&
+          !_validTimeSlots.contains(
+            widget.slotToEdit.timeSlot,
+          )) {
+        _validTimeSlots.add(
+          widget.slotToEdit.timeSlot,
+        );
       }
 
-      // Si no, buscamos en los slots del día como respaldo
-      for (var slot in _daySlotsData) {
-        final timeVal = slot['time']?.toString() ?? '';
-        final price = (slot['price'] as num?)?.toDouble() ?? 0.0;
-
-        if (timeVal.contains('-') || timeVal == timeSlot) {
-          if (price > 0) {
-            _priceController.text = price.toStringAsFixed(0);
-          }
-          if (timeVal == timeSlot) break;
+      if (_validTimeSlots.isNotEmpty) {
+        if (_selectedTimeSlot == null ||
+            !_validTimeSlots.contains(
+              _selectedTimeSlot,
+            )) {
+          _selectedTimeSlot =
+              widget.slotToEdit?.timeSlot ??
+                  _validTimeSlots.first;
         }
-      }
-    }
-  }
-
-  void _processSlotsForDay(String dayName, AvailabilityState state) {
-    if (state is AvailabilityLoaded) {
-      _daySlotsData = state.schedule[dayName] ?? state.schedule[dayName.toLowerCase()] ?? [];
-
-      // 1. Arrancamos copiando los precios hardcodeados como base por defecto
-      Map<String, double> tempClassPrices = Map.from(_fallbackPrices);
-      double tempDefaultPrice = 1400.0;
-
-      List<String> extractedSlots = [];
-
-      // 2. Sobrescribimos con lo que realmente configuró el profe en Firebase (si existe)
-      for (var slot in _daySlotsData) {
-        final timeVal = slot['time']?.toString() ?? '';
-        final price = (slot['price'] as num?)?.toDouble() ?? 0.0;
-        final classTypeVal = slot['classType']?.toString() ?? '';
-
-        if (price > 0) {
-          if (classTypeVal.isNotEmpty) {
-            tempClassPrices[classTypeVal] = price; // Sobrescribe con el de Firebase
-          } else {
-            tempDefaultPrice = price;
-          }
-        }
-
-        // Lógica para extraer los horarios
-        if (timeVal.contains('-')) {
-          final parts = timeVal.split('-').map((e) => e.trim()).toList();
-          if (parts.length == 2) {
-            final startHour = parts[0];
-            final endHour = parts[1];
-
-            final startIndex = AvailabilityConstants.hoursRange.indexOf(startHour);
-            final endIndex = AvailabilityConstants.hoursRange.indexOf(endHour);
-
-            if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex) {
-              for (int i = startIndex; i <= endIndex; i++) {
-                final hourSlot = AvailabilityConstants.hoursRange[i];
-                if (!extractedSlots.contains(hourSlot)) {
-                  extractedSlots.add(hourSlot);
-                }
-              }
-            }
-          }
-        } else if (timeVal.isNotEmpty) {
-          if (!extractedSlots.contains(timeVal)) {
-            extractedSlots.add(timeVal);
-          }
-        }
+      } else {
+        _selectedTimeSlot = null;
       }
 
-      setState(() {
-        _currentDayClassPrices = tempClassPrices;
-        _defaultDayPrice = tempDefaultPrice;
-        _validTimeSlots = extractedSlots.isNotEmpty ? extractedSlots : List.from(AvailabilityConstants.hoursRange);
-
-        if (widget.slotToEdit != null && !_validTimeSlots.contains(widget.slotToEdit.timeSlot)) {
-          _validTimeSlots.add(widget.slotToEdit.timeSlot);
-        }
-
-        if (_validTimeSlots.isNotEmpty && (_selectedTimeSlot == null || !_validTimeSlots.contains(_selectedTimeSlot))) {
-          _selectedTimeSlot = widget.slotToEdit?.timeSlot ?? _validTimeSlots.first;
-        }
-
-        // Asignamos el precio al input según el tipo de clase seleccionado actualmente
-        if (widget.slotToEdit == null) {
-          final activePrice = _currentDayClassPrices[_selectedClassType] ?? _defaultDayPrice;
-          _priceController.text = activePrice.toStringAsFixed(0);
-        }
-      });
-    }
+      _updatePriceForClassType(
+        _selectedClassType,
+      );
+    });
   }
 
-  String? _validateTimeSlot(String? timeSlot) {
-    if (timeSlot == null) return 'Por favor selecciona un horario';
+  void _updatePriceForClassType(
+      String classType,
+      ) {
+    final double price =
+        _currentDayClassPrices[classType] ??
+            0.0;
 
-    final now = DateTime.now();
-    final isToday = _selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day;
+    developer.log(
+      'Precio para $classType: $price',
+    );
 
-    if (!isToday) return null; // Si no es hoy, es válido
+    _priceController.text =
+    price > 0
+        ? price.toStringAsFixed(0)
+        : '';
+  }
 
-    int selectedHour = int.tryParse(timeSlot.split(':')[0]) ?? 0;
-    if (timeSlot.toUpperCase().contains('PM') && selectedHour < 12) {
-      selectedHour += 12;
-    }
-    if (timeSlot.toUpperCase().contains('AM') && selectedHour == 12) {
-      selectedHour = 0;
-    }
-
-    if (selectedHour <= now.hour) {
-      return 'No puedes elegir un horario que ya pasó hoy';
+  String? _validateTimeSlot(
+      String? timeSlot,
+      ) {
+    if (timeSlot == null) {
+      return 'Por favor selecciona un horario';
     }
 
     return null;
   }
 
-  void _guardarAlumno({required bool seguirAgregando}) {
-    // 1. Validamos el horario usando el método centralizado
-    final timeError = _validateTimeSlot(_selectedTimeSlot);
+  void _guardarAlumno({
+    required bool seguirAgregando,
+  }) {
+    final timeError =
+    _validateTimeSlot(
+      _selectedTimeSlot,
+    );
+
     setState(() {
-      _timeSlotErrorText = timeError;
+      _timeSlotErrorText =
+          timeError;
     });
 
-    // Si hay error en el horario, detenemos el guardado inmediatamente
-    if (timeError != null) return;
+    if (timeError != null) {
+      return;
+    }
 
-    // 2. Validamos el formulario general (campos de texto, etc.)
-    if (_formKey.currentState!.validate()) {
-      final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
-      final displayTitle = fullName.isEmpty ? 'Clase - $_currentSelectedDay' : fullName;
-      final parsedPrice = double.tryParse(_priceController.text) ?? 0.0;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      final maxSpots = (_selectedClassType == 'Individual' || _selectedClassType == 'Individual Exclusivo') ? 1 : 4;
-      final availableSpots = maxSpots > 1 ? maxSpots - 1 : 0;
+    final fullName =
+    '${_nameController.text} '
+        '${_surnameController.text}'
+        .trim();
 
-      final user = widget.currentUserId;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: No hay un usuario activo.')),
-        );
-        return;
-      }
+    final displayTitle =
+    fullName.isEmpty
+        ? 'Clase - $_currentSelectedDay'
+        : fullName;
 
-      if (widget.slotToEdit == null ) {
-        widget.lessonsBloc.add(AddLessonIntent(
-          id: DateTime.now().millisecondsSinceEpoch.toString() + (_nameController.text.hashCode.toString()),
-          userId: user,
-          title: displayTitle,
-          date: _currentSelectedDay,
-          timeSlot: _selectedTimeSlot ?? '08:00 AM',
-          totalSpots: maxSpots,
-          availableSpots: availableSpots,
-          isBooked: true,
-          studentName: fullName,
-          studentPhone: _phoneController.text,
-          studentEmail: widget.currentUserEmail,
-          price: parsedPrice,
-          level: _selectedLevel,
-          classType: _selectedClassType,
-        ));
-      } else {
-        widget.lessonsBloc.add(UpdateLessonIntent(
-          id: widget.slotToEdit.id,
-          userId: user,
-          title: displayTitle,
-          date: _currentSelectedDay,
-          timeSlot: _selectedTimeSlot ?? widget.slotToEdit.timeSlot,
-          totalSpots: maxSpots,
-          availableSpots: widget.slotToEdit.availableSpots,
-          isBooked: true,
-          studentName: fullName,
-          studentPhone: _phoneController.text,
-          studentEmail: widget.slotToEdit.studentEmail,
-          price: parsedPrice,
-          level: _selectedLevel,
-          classType: _selectedClassType,
-        ));
-      }
+    final parsedPrice =
+        double.tryParse(
+          _priceController.text,
+        ) ??
+            0.0;
 
-      if (seguirAgregando) {
-        setState(() {
-          _nameController.clear();
-          _surnameController.clear();
-          _phoneController.clear();
-          _timeSlotErrorText = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Alumno guardado! Ya puedes ingresar al siguiente.'),
-            duration: Duration(seconds: 2),
+    final maxSpots =
+    (_selectedClassType ==
+        'Individual' ||
+        _selectedClassType ==
+            'Individual Exclusivo')
+        ? 1
+        : 4;
+
+    final availableSpots =
+    maxSpots > 1
+        ? maxSpots - 1
+        : 0;
+
+    final user =
+        widget.currentUserId;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error: No hay un usuario activo.',
           ),
-        );
-      } else {
-        Navigator.pop(context);
-      }
+        ),
+      );
+
+      return;
+    }
+
+    if (widget.slotToEdit == null) {
+      widget.lessonsBloc.add(
+        AddLessonIntent(
+          id: DateTime.now()
+              .millisecondsSinceEpoch
+              .toString() +
+              _nameController
+                  .text
+                  .hashCode
+                  .toString(),
+
+          userId: user,
+
+          title: displayTitle,
+
+          date: _currentSelectedDay,
+
+          timeSlot:
+          _selectedTimeSlot ?? '',
+
+          totalSpots: maxSpots,
+
+          availableSpots:
+          availableSpots,
+
+          isBooked: true,
+
+          studentName: fullName,
+
+          studentPhone:
+          _phoneController.text,
+
+          studentEmail:
+          widget.currentUserEmail,
+
+          price: parsedPrice,
+
+          level: _selectedLevel,
+
+          classType:
+          _selectedClassType,
+        ),
+      );
+    } else {
+      widget.lessonsBloc.add(
+        UpdateLessonIntent(
+          id: widget.slotToEdit.id,
+
+          userId: user,
+
+          title: displayTitle,
+
+          date: _currentSelectedDay,
+
+          timeSlot:
+          _selectedTimeSlot ??
+              widget.slotToEdit.timeSlot,
+
+          totalSpots: maxSpots,
+
+          availableSpots:
+          widget.slotToEdit.availableSpots,
+
+          isBooked: true,
+
+          studentName: fullName,
+
+          studentPhone:
+          _phoneController.text,
+
+          studentEmail:
+          widget.slotToEdit.studentEmail,
+
+          price: parsedPrice,
+
+          level: _selectedLevel,
+
+          classType:
+          _selectedClassType,
+        ),
+      );
+    }
+
+    if (seguirAgregando) {
+      setState(() {
+        _nameController.clear();
+        _surnameController.clear();
+        _phoneController.clear();
+        _timeSlotErrorText = null;
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            '¡Alumno guardado! Ya puedes ingresar al siguiente.',
+          ),
+          duration:
+          Duration(seconds: 2),
+        ),
+      );
+    } else {
+      Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    developer.log("OPCIONES DE CLASE CARGADAS: $_classTypeOptions");
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final keyboardHeight =
+        MediaQuery.of(context)
+            .viewInsets
+            .bottom;
 
     return BlocProvider(
-      create: (context) => getIt<AvailabilityBloc>()..add(LoadAvailabilityIntent()),
-      child: BlocConsumer<AvailabilityBloc, AvailabilityState>(
+      create: (context) =>
+      getIt<AvailabilityBloc>()
+        ..add(
+          LoadAvailabilityIntent(),
+        ),
+      child: BlocConsumer<
+          AvailabilityBloc,
+          AvailabilityState>(
         listener: (context, state) {
-          if (state is AvailabilityLoaded) {
-            _processSlotsForDay(_currentSelectedDay, state);
+          if (state
+          is AvailabilityLoaded) {
+            _processScheduleForDay(
+              _currentSelectedDay,
+              state.schedule,
+            );
           }
         },
         builder: (context, state) {
           return Container(
-            decoration: const BoxDecoration(
+            decoration:
+            const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius:
+              BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             padding: EdgeInsets.only(
-              bottom: keyboardHeight + 24,
+              bottom:
+              keyboardHeight + 24,
               left: 20,
               right: 20,
               top: 20,
@@ -348,197 +511,397 @@ class _StudentModalFormState extends State<StudentModalForm> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize:
+                    MainAxisSize.min,
+                    crossAxisAlignment:
+                    CrossAxisAlignment
+                        .stretch,
                     children: [
                       Text(
-                        widget.slotToEdit == null ? 'Inscribir Alumno a Clase' : 'Editar Turno / Alumno',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _nameController,
-                        inputFormatters: [InputValidators.onlyLetters],
-                        decoration: const InputDecoration(labelText: 'Nombre', border: OutlineInputBorder()),
-                        validator: (value) => InputValidators.validateRequired(value, 'Nombre'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _surnameController,
-                        inputFormatters: [InputValidators.onlyLetters],
-                        decoration: const InputDecoration(labelText: 'Apellido', border: OutlineInputBorder()),
-                        validator: (value) => InputValidators.validateRequired(value, 'Apellido'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [InputValidators.onlyNumbers],
-                        decoration: const InputDecoration(labelText: 'Teléfono', border: OutlineInputBorder()),
-                        validator: InputValidators.validatePhone,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Dropdown para Nivel
-                      DropdownButtonFormField<String>(
-                        value: _selectedLevel,
-                        decoration: const InputDecoration(
-                          labelText: 'Nivel de Clase',
-                          border: OutlineInputBorder(),
+                        widget.slotToEdit ==
+                            null
+                            ? 'Inscribir Alumno a Clase'
+                            : 'Editar Turno / Alumno',
+                        style:
+                        const TextStyle(
+                          fontSize: 18,
+                          fontWeight:
+                          FontWeight.bold,
                         ),
-                        items: _levelOptions.map((level) {
-                          return DropdownMenuItem(value: level, child: Text(level));
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedLevel = value);
-                          }
-                        },
+                        textAlign:
+                        TextAlign.center,
                       ),
-                      const SizedBox(height: 12),
 
-                      // Dropdown para Tipo de Clase (Actualiza el precio al cambiar)
-                      DropdownButtonFormField<String>(
-                        value: _selectedClassType,
-                        decoration: const InputDecoration(
-                          labelText: 'Tipo de Clase',
-                          border: OutlineInputBorder(),
+                      const SizedBox(
+                        height: 16,
+                      ),
+
+                      TextFormField(
+                        controller:
+                        _nameController,
+                        inputFormatters: [
+                          InputValidators
+                              .onlyLetters,
+                        ],
+                        decoration:
+                        const InputDecoration(
+                          labelText: 'Nombre',
+                          border:
+                          OutlineInputBorder(),
                         ),
-                        items: _classTypeOptions.map((type) {
-                          return DropdownMenuItem(value: type, child: Text(type));
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
+                        validator: (value) =>
+                            InputValidators
+                                .validateRequired(
+                              value,
+                              'Nombre',
+                            ),
+                      ),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
+                      TextFormField(
+                        controller:
+                        _surnameController,
+                        inputFormatters: [
+                          InputValidators
+                              .onlyLetters,
+                        ],
+                        decoration:
+                        const InputDecoration(
+                          labelText: 'Apellido',
+                          border:
+                          OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            InputValidators
+                                .validateRequired(
+                              value,
+                              'Apellido',
+                            ),
+                      ),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
+                      TextFormField(
+                        controller:
+                        _phoneController,
+                        keyboardType:
+                        TextInputType.phone,
+                        inputFormatters: [
+                          InputValidators
+                              .onlyNumbers,
+                        ],
+                        decoration:
+                        const InputDecoration(
+                          labelText: 'Teléfono',
+                          border:
+                          OutlineInputBorder(),
+                        ),
+                        validator:
+                        InputValidators
+                            .validatePhone,
+                      ),
+
+                      const SizedBox(
+                        height: 16,
+                      ),
+
+                      DropdownButtonFormField<
+                          String>(
+                        value:
+                        _selectedLevel,
+                        decoration:
+                        const InputDecoration(
+                          labelText:
+                          'Nivel de Clase',
+                          border:
+                          OutlineInputBorder(),
+                        ),
+                        items: _levelOptions
+                            .map(
+                              (level) =>
+                              DropdownMenuItem(
+                                value: level,
+                                child:
+                                Text(level),
+                              ),
+                        )
+                            .toList(),
+                        onChanged:
+                            (value) {
+                          if (value !=
+                              null) {
                             setState(() {
-                              _selectedClassType = value;
-                              // Actualiza el precio automáticamente según el mapa activo (Firebase o fallback)
-                              final priceToUse = _currentDayClassPrices[value] ?? _fallbackPrices[value] ?? 1400.0;
-                              _priceController.text = priceToUse.toStringAsFixed(0);
+                              _selectedLevel =
+                                  value;
                             });
                           }
                         },
                       ),
-                      const SizedBox(height: 12),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
+                      DropdownButtonFormField<
+                          String>(
+                        value:
+                        _selectedClassType,
+                        decoration:
+                        const InputDecoration(
+                          labelText:
+                          'Tipo de Clase',
+                          border:
+                          OutlineInputBorder(),
+                        ),
+                        items:
+                        _classTypeOptions
+                            .map(
+                              (type) =>
+                              DropdownMenuItem(
+                                value: type,
+                                child:
+                                Text(type),
+                              ),
+                        )
+                            .toList(),
+                        onChanged:
+                            (value) {
+                          if (value ==
+                              null) {
+                            return;
+                          }
+
+                          setState(() {
+                            _selectedClassType =
+                                value;
+
+                            _updatePriceForClassType(
+                              value,
+                            );
+                          });
+                        },
+                      ),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
 
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment:
+                        MainAxisAlignment
+                            .spaceBetween,
                         children: [
                           Text(
-                            'Fecha: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+                            'Fecha: '
+                                '${_selectedDate.day}/'
+                                '${_selectedDate.month}/'
+                                '${_selectedDate.year}',
+                            style:
+                            const TextStyle(
+                              fontWeight:
+                              FontWeight
+                                  .w500,
+                              fontSize: 15,
+                            ),
                           ),
-                          TextButton.icon(
-                            onPressed: () async {
-                              final DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate: _selectedDate,
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now().add(const Duration(days: 365)),
-                              );
-                              if (picked != null && picked != _selectedDate) {
-                                setState(() {
-                                  _selectedDate = picked;
-                                  _currentSelectedDay = _getDayName(picked);
 
-                                  if (state is AvailabilityLoaded) {
-                                    _processSlotsForDay(_currentSelectedDay, state);
-                                  }
+                          TextButton.icon(
+                            onPressed:
+                                () async {
+                              final picked =
+                              await showDatePicker(
+                                context:
+                                context,
+                                initialDate:
+                                _selectedDate,
+                                firstDate:
+                                DateTime.now(),
+                                lastDate:
+                                DateTime.now()
+                                    .add(
+                                  const Duration(
+                                    days: 365,
+                                  ),
+                                ),
+                              );
+
+                              if (picked !=
+                                  null) {
+                                setState(() {
+                                  _selectedDate =
+                                      picked;
+
+                                  _currentSelectedDay =
+                                      InputValidators
+                                          .getCurrentDayName(
+                                        picked,
+                                      );
                                 });
+
+                                final currentState =
+                                    context
+                                        .read<
+                                        AvailabilityBloc>()
+                                        .state;
+
+                                if (currentState
+                                is AvailabilityLoaded) {
+                                  _processScheduleForDay(
+                                    _currentSelectedDay,
+                                    currentState
+                                        .schedule,
+                                  );
+                                }
                               }
                             },
-                            icon: const Icon(Icons.calendar_today, size: 18),
-                            label: const Text('Cambiar'),
+                            icon:
+                            const Icon(
+                              Icons
+                                  .calendar_today,
+                              size: 18,
+                            ),
+                            label:
+                            const Text(
+                              'Cambiar',
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Día seleccionado: $_currentSelectedDay',
-                        style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.grey),
+
+                      const SizedBox(
+                        height: 4,
                       ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: (_selectedTimeSlot != null && _validTimeSlots.contains(_selectedTimeSlot))
-                            ? _selectedTimeSlot
-                            : (_validTimeSlots.isNotEmpty ? _validTimeSlots.first : null),
-                        decoration: InputDecoration(
-                          labelText: 'Horario disponible',
-                          border: const OutlineInputBorder(),
-                          errorText: _timeSlotErrorText,
+
+                      Text(
+                        'Día seleccionado: '
+                            '$_currentSelectedDay',
+                        style:
+                        const TextStyle(
+                          fontWeight:
+                          FontWeight.w500,
+                          color: Colors.grey,
                         ),
-                        items: _validTimeSlots.map((slot) {
-                          return DropdownMenuItem(value: slot, child: Text(slot));
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            final error = _validateTimeSlot(value);
+                      ),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
+                      DropdownButtonFormField<
+                          String>(
+                        value: (_selectedTimeSlot !=
+                            null &&
+                            _validTimeSlots
+                                .contains(
+                              _selectedTimeSlot,
+                            ))
+                            ? _selectedTimeSlot
+                            : (_validTimeSlots
+                            .isNotEmpty
+                            ? _validTimeSlots
+                            .first
+                            : null),
+                        decoration:
+                        InputDecoration(
+                          labelText:
+                          'Horario disponible',
+                          border:
+                          const OutlineInputBorder(),
+                          errorText:
+                          _timeSlotErrorText,
+                        ),
+                        items: _validTimeSlots
+                            .map(
+                              (slot) =>
+                              DropdownMenuItem(
+                                value: slot,
+                                child:
+                                Text(slot),
+                              ),
+                        )
+                            .toList(),
+                        onChanged:
+                            (value) {
+                          if (value !=
+                              null) {
                             setState(() {
-                              _timeSlotErrorText = error;
-                              if (error == null) {
-                                _selectedTimeSlot = value;
-                                _updatePriceForSelectedSlot(value);
-                              }
+                              _selectedTimeSlot =
+                                  value;
+
+                              _timeSlotErrorText =
+                              null;
                             });
                           }
                         },
                       ),
-                      const SizedBox(height: 12),
+
+                      const SizedBox(
+                        height: 12,
+                      ),
+
                       TextFormField(
-                        controller: _priceController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: const InputDecoration(
-                          labelText: 'Importe / Precio (\$)',
-                          border: OutlineInputBorder(),
+                        controller:
+                        _priceController,
+                        readOnly: true,
+                        decoration:
+                        const InputDecoration(
+                          labelText:
+                          'Importe / Precio',
+                          border:
+                          OutlineInputBorder(),
                           prefixText: '\$ ',
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Por favor ingresa un importe';
+                          if (value ==
+                              null ||
+                              value
+                                  .trim()
+                                  .isEmpty) {
+                            return 'No hay un precio configurado para este tipo de clase';
                           }
+
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
 
-                      // Botones de guardado múltiple o simple
-                      if (widget.slotToEdit == null && _selectedClassType == 'Grupal') ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                onPressed: () => _guardarAlumno(seguirAgregando: false),
-                                child: const Text('Guardar y Salir', style: TextStyle(fontSize: 13)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else ...[
-                        Center(
-                          child: SizedBox(
-                            width: 200,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                              ),
-                              onPressed: () => _guardarAlumno(seguirAgregando: false),
-                              child: Text(
-                                widget.slotToEdit == null ? 'Guardar Reserva' : 'Actualizar Cambios',
-                                style: const TextStyle(fontSize: 15),
-                              ),
-                            ),
+                      const SizedBox(
+                        height: 20,
+                      ),
+
+                      ElevatedButton(
+                        style:
+                        ElevatedButton
+                            .styleFrom(
+                          backgroundColor:
+                          Colors.green
+                              .shade700,
+                          foregroundColor:
+                          Colors.white,
+                          padding:
+                          const EdgeInsets
+                              .symmetric(
+                            vertical: 14,
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 10),
+                        onPressed: () =>
+                            _guardarAlumno(
+                              seguirAgregando:
+                              false,
+                            ),
+                        child:
+                        const Text(
+                          'Guardar Alumno',
+                          style:
+                          TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

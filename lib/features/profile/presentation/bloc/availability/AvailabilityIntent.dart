@@ -6,7 +6,8 @@ abstract class AvailabilityIntent {}
 class LoadAvailabilityIntent extends AvailabilityIntent {}
 
 class SaveAvailabilityIntent extends AvailabilityIntent {
-  final Map<String, List<Map<String, dynamic>>> schedule;
+  // Cambiado de List a Map para soportar el nuevo modelo conceptual
+  final Map<String, Map<String, dynamic>> schedule;
 
   SaveAvailabilityIntent(this.schedule);
 }

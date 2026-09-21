@@ -34,6 +34,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   double _basePriceFromTeacher = 20.0;
 
   List<String> _availableTimeSlots = [];
+  Map<String, double> _currentDayClassPrices = {};
 
   @override
   void initState() {
@@ -49,36 +50,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
+  /// Procesa la disponibilidad adaptada al nuevo modelo de rangos y precios por día:
+  /// { 'Lunes': { 'startTime': '08:00', 'endTime': '21:00', 'prices': { ... } } }
   void _processAvailability(AvailabilityState state) {
     if (state is AvailabilityLoaded) {
-      final daySlots = state.schedule[_currentSelectedDay] ?? state.schedule[_currentSelectedDay.toLowerCase()] ?? [];
+      final dayData = state.schedule[_currentSelectedDay] ??
+          state.schedule[_currentSelectedDay.toLowerCase()] ?? {};
 
+      final String startHour = dayData['startTime'] ?? '08:00';
+      final String endHour = dayData['endTime'] ?? '21:00';
+
+      final Map<String, dynamic> rawPrices = dayData['prices'] ?? {};
+      _currentDayClassPrices = rawPrices.map((key, value) => MapEntry(key, (value as num).toDouble()));
+
+      // Generación dinámica de los slots de tiempo entre startTime y endTime
       List<String> extractedSlots = [];
-      double defaultSlotPrice = 20.0;
+      final startIndex = AvailabilityConstants.hoursRange.indexOf(startHour);
+      final endIndex = AvailabilityConstants.hoursRange.indexOf(endHour);
 
-      for (var slot in daySlots) {
-        final timeVal = slot['time']?.toString() ?? '';
-        final priceVal = (slot['price'] as num?)?.toDouble() ?? 20.0;
-
-        if (priceVal > 0) defaultSlotPrice = priceVal;
-
-        if (timeVal.contains('-')) {
-          final parts = timeVal.split('-').map((e) => e.trim()).toList();
-          if (parts.length == 2) {
-            final start = parts[0];
-            final end = parts[1];
-            final startIndex = AvailabilityConstants.hoursRange.indexOf(start);
-            final endIndex = AvailabilityConstants.hoursRange.indexOf(end);
-
-            if (startIndex != -1 && endIndex != -1 && startIndex <= endIndex) {
-              for (int i = startIndex; i <= endIndex; i++) {
-                final hour = AvailabilityConstants.hoursRange[i];
-                if (!extractedSlots.contains(hour)) extractedSlots.add(hour);
-              }
-            }
-          }
-        } else if (timeVal.isNotEmpty) {
-          if (!extractedSlots.contains(timeVal)) extractedSlots.add(timeVal);
+      if (startIndex != -1 && endIndex != -1 && startIndex < endIndex) {
+        for (int i = startIndex; i < endIndex; i++) {
+          final slotRange = '${AvailabilityConstants.hoursRange[i]} - ${AvailabilityConstants.hoursRange[i + 1]}';
+          extractedSlots.add(slotRange);
         }
       }
 
@@ -88,9 +81,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
         if (_availableTimeSlots.isNotEmpty && (_selectedTimeSlot == null || !_availableTimeSlots.contains(_selectedTimeSlot))) {
           _selectedTimeSlot = _availableTimeSlots.first;
         }
-        _basePriceFromTeacher = defaultSlotPrice;
+
+        // Actualizamos el precio inicial según el tipo de clase actual
+        _updatePriceForClassType(_selectedClassType);
       });
     }
+  }
+
+  void _updatePriceForClassType(String classType) {
+    final double price = _currentDayClassPrices[classType] ?? 20.0;
+    setState(() {
+      _basePriceFromTeacher = price;
+    });
   }
 
   @override
@@ -150,13 +152,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         DropdownButtonFormField<String>(
                           value: _selectedLevel,
                           decoration: const InputDecoration(
-                            labelText: 'Nivel (Básico, Intermedio, Pro)',
+                            labelText: 'Nivel',
                             border: OutlineInputBorder(),
                           ),
                           items: const [
                             DropdownMenuItem(value: 'Básico', child: Text('Básico')),
                             DropdownMenuItem(value: 'Intermedio', child: Text('Intermedio')),
-                            DropdownMenuItem(value: 'Pro', child: Text('Pro')),
+                            DropdownMenuItem(value: 'Avanzado', child: Text('Avanzado')),
+                            DropdownMenuItem(value: 'Competencia', child: Text('Competencia')),
                           ],
                           onChanged: (value) {
                             if (value != null) setState(() => _selectedLevel = value);
@@ -164,6 +167,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         ),
                         const SizedBox(height: 16),
 
+                        // Dropdown Tipo de Clase
                         DropdownButtonFormField<String>(
                           value: _selectedClassType,
                           decoration: const InputDecoration(
@@ -176,16 +180,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             DropdownMenuItem(value: 'Individual Exclusivo', child: Text('Individual Exclusivo')),
                           ],
                           onChanged: (value) {
-                            if (value != null) setState(() => _selectedClassType = value);
+                            if (value != null) {
+                              setState(() {
+                                _selectedClassType = value;
+                                _updatePriceForClassType(value);
+                              });
+                            }
                           },
                         ),
                         const SizedBox(height: 16),
 
-                        // Dropdown Horarios
+                        // Dropdown Horarios Disponibles
                         DropdownButtonFormField<String>(
-                          value: _selectedTimeSlot,
+                          value: (_selectedTimeSlot != null && _availableTimeSlots.contains(_selectedTimeSlot))
+                              ? _selectedTimeSlot
+                              : (_availableTimeSlots.isNotEmpty ? _availableTimeSlots.first : null),
                           decoration: const InputDecoration(
-                            labelText: 'Horario Disponible (según profesor)',
+                            labelText: 'Horario Disponible',
                             border: OutlineInputBorder(),
                           ),
                           items: _availableTimeSlots.map((slot) {
@@ -214,7 +225,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
                                   final fullName = '${_nameController.text} ${_surnameController.text}'.trim();
-                                  final titleDetails = '$fullName ($_selectedLevel - $_selectedClassType)';
+                                  final titleDetails = fullName.isEmpty ? 'Clase - $_currentSelectedDay' : fullName;
 
                                   int maxSpots;
                                   int available;
@@ -222,10 +233,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   if (_selectedClassType == 'Grupal') {
                                     maxSpots = 4;
                                     available = 3;
-                                  } else if (_selectedClassType == 'Individual') {
-                                    maxSpots = 4;
-                                    available = 3;
-                                  } else { // 'Individual exclusivo'
+                                  } else {
                                     maxSpots = 1;
                                     available = 0;
                                   }
@@ -235,7 +243,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                     userId: widget.user.id,
                                     title: titleDetails,
                                     date: _currentSelectedDay,
-                                    timeSlot: _selectedTimeSlot ?? '09:00 AM',
+                                    timeSlot: _selectedTimeSlot ?? '08:00 - 09:00',
                                     totalSpots: maxSpots,
                                     availableSpots: available,
                                     isBooked: true,

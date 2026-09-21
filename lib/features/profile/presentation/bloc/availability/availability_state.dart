@@ -8,13 +8,15 @@ class AvailabilityInitial extends AvailabilityState {}
 class AvailabilityLoading extends AvailabilityState {}
 
 class AvailabilityLoaded extends AvailabilityState {
-  final Map<String, List<Map<String, dynamic>>> schedule;
+  final Map<String, Map<String, dynamic>> schedule;
 
   AvailabilityLoaded(this.schedule);
 }
 
-class AvailabilitySaving extends AvailabilityLoaded {
-  AvailabilitySaving(super.schedule);
+class AvailabilitySaving extends AvailabilityState {
+  final Map<String, Map<String, dynamic>> schedule;
+
+  AvailabilitySaving(this.schedule);
 }
 
 class AvailabilitySavedSuccess extends AvailabilityState {}
