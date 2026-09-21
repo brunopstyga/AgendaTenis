@@ -80,11 +80,14 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               else
                 ElevatedButton(
                   onPressed: widget.onSubmit,
-                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(50),
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,),
                   child: Text(widget.isRegistering ? 'Registrarse' : 'Ingresar'),
                 ),
               TextButton(
                 onPressed: widget.onToggleMode,
+                style: TextButton.styleFrom(foregroundColor: Colors.black),
                 child: Text(
                   widget.isRegistering
                       ? '¿Ya tienes una cuenta? Inicia sesión'

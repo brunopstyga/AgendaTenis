@@ -69,7 +69,8 @@ class _LoginViewState extends State<_LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isRegistering ? 'Registro de Usuario' : 'Iniciar Sesión')),
+      appBar: AppBar(title: Text(_isRegistering ? 'Registro de Usuario' : 'Iniciar Sesión'),
+      centerTitle: true,),
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {

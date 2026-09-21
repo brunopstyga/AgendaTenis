@@ -38,17 +38,6 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
 
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Agenda (Lista)'),
-            onTap: () {
-              Navigator.pop(context); // Cierra el drawer
-              if (isGridPage && onBackToList != null) {
-                onBackToList!(); // Si estamos en la grilla, vuelve a la lista
-              }
-            },
-          ),
-
           // --- BOTÓN DINÁMICO ---
           ListTile(
             leading: Icon(isGridPage ? Icons.list_alt : Icons.grid_view),
