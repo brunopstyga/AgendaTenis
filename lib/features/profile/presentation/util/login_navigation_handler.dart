@@ -15,9 +15,8 @@ class LoginNavigationHandler {
     if (state.user.email == 'admin@tennis.com') {
       AppSnackBar.show(context, '¡Bienvenido Administrador!',
         isError: true,);
-      return;
-
       _navigateTo(context, LessonsPage(currentUser: state.user));
+      return;
     } else if (state.needsOnboarding) {
       _navigateTo(context, OnboardingPage(user: state.user));
     } else {
