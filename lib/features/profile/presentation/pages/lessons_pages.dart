@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tennis_scheduler/features/profile/presentation/components/app_snack_bar.dart';
 import '../../../../core/di/injection.dart';
 import '../../presentation/widgets/app_drawer.dart';
 import '../bloc/lessons_bloc.dart';
@@ -166,7 +167,7 @@ class _LessonsViewState extends State<_LessonsView> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message, isError: true);
   }
 
   void _showAddStudentModal(BuildContext context, {dynamic slotToEdit}) {
@@ -246,12 +247,7 @@ class _LessonsViewState extends State<_LessonsView> {
     return BlocConsumer<LessonsBloc, LessonsState>(
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: Colors.red,
-            ),
-          );
+          AppSnackBar.show(context, state.errorMessage!,isError: true);
         }
       },
       builder: (context, state) {

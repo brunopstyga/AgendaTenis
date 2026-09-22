@@ -5,6 +5,7 @@ import '../../../../core/di/injection.dart';
 import '../bloc/login/login_bloc.dart';
 import '../bloc/login/login_intent.dart';
 import '../bloc/login/login_state.dart';
+import '../components/app_snack_bar.dart';
 import '../components/login_form_widget.dart';
 import '../util/login_navigation_handler.dart';
 
@@ -49,8 +50,10 @@ class _LoginViewState extends State<_LoginView> {
     final name = _nameController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor completa los campos obligatorios')),
+      AppSnackBar.show(
+        context,
+        'Por favor completa los campos obligatorios',
+        isError: true,
       );
       return;
     }
@@ -76,14 +79,10 @@ class _LoginViewState extends State<_LoginView> {
           if (state is LoginSuccess) {
             LoginNavigationHandler.handleLoginSuccess(context, state);
           } else if (state is RegisterSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('¡Registro exitoso! Ya puedes iniciar sesión.')),
-            );
+            AppSnackBar.show(context, '¡Registro exitoso! Ya puedes iniciar sesión.');
             setState(() => _isRegistering = false);
           } else if (state is LoginError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
+                AppSnackBar.show(context, state.message, isError: true);
           }
         },
         builder: (context, state) {

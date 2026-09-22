@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/lessons_bloc.dart';
 import '../bloc/lessons_state.dart';
+import '../components/app_snack_bar.dart';
 import '../widgets/app_drawer.dart';
 
 class LessonsGridPage extends StatelessWidget {
@@ -62,12 +63,7 @@ class LessonsGridPage extends StatelessWidget {
       body: BlocConsumer<LessonsBloc, LessonsState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-              ),
-            );
+            AppSnackBar.show(context, state.errorMessage!, isError: true);
           }
         },
         builder: (context, state) {

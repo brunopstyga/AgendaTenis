@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tennis_scheduler/features/profile/presentation/components/app_snack_bar.dart';
 
 import '../../../../core/di/injection.dart';
 import '../bloc/availability/AvailabilityIntent.dart';
@@ -272,9 +273,8 @@ class _StudentModalFormState extends State<StudentModalForm> {
     final availableSpots = maxSpots > 1 ? maxSpots - 1 : 0;
     final user = widget.currentUserId;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: No hay un usuario activo.')),
-      );
+      AppSnackBar.show(context, 'Error: No hay un usuario activo.',
+      isError: true);
       return;
     }
     if (widget.slotToEdit == null) {

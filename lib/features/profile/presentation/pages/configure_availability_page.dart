@@ -5,6 +5,7 @@ import '../../../../core/di/injection.dart';
 import '../bloc/availability/AvailabilityIntent.dart';
 import '../bloc/availability/availability_bloc.dart';
 import '../bloc/availability/availability_state.dart';
+import '../components/app_snack_bar.dart';
 import '../util/AvailabilityConstants.dart';
 import '../util/input_validators.dart';
 
@@ -127,21 +128,19 @@ class _ConfigureAvailabilityPageState
     AvailabilityConstants.hoursRange.indexOf(_endTime);
 
     if (startIndex == -1 || endIndex == -1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Horario inválido'),
-        ),
-      );
-      return;
+      AppSnackBar.show(
+      context,
+      'Horario inválido',
+      isError: true,
+    );
+    return;
     }
 
     if (startIndex >= endIndex) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
+        AppSnackBar.show(
+          context,
             'La hora de finalización debe ser posterior a la de inicio',
-          ),
-        ),
+          isError: true,
       );
       return;
     }
@@ -151,14 +150,11 @@ class _ConfigureAvailabilityPageState
 
       _workingSchedule[_selectedDay]?['endTime'] = _endTime;
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Horario de atención actualizado para $_selectedDay',
-        ),
-      ),
-    );
+    AppSnackBar.show(
+        context,
+      'Horario de atención actualizado para $_selectedDay',
+    isError: true,);
+    return;
   }
 
   void _saveClassTypePrice() {
@@ -168,11 +164,7 @@ class _ConfigureAvailabilityPageState
     InputValidators.validatePrice(priceText);
 
     if (priceError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(priceError),
-        ),
-      );
+      AppSnackBar.show(context, priceError, isError: true);
       return;
     }
 
@@ -194,14 +186,9 @@ class _ConfigureAvailabilityPageState
     developer.log(
       'Precio $_selectedClassType para $_selectedDay: $price',
     );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Precio de "$_selectedClassType" para $_selectedDay actualizado a \$$price',
-        ),
-      ),
-    );
+   AppSnackBar.show(context, 'Precio de "$_selectedClassType" para $_selectedDay actualizado a \$$price',
+   isError: true);
+   return;
   }
 
   @override
@@ -240,30 +227,19 @@ class _ConfigureAvailabilityPageState
                   }
                 });
               });
-
               _loadSelectedDayData();
             }
-
             if (state is AvailabilitySavedSuccess) {
               Navigator.pop(context);
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Configuración guardada correctamente',
-                  ),
-                ),
-              );
+              AppSnackBar.show(context, 'Configuración guardada correctamente',
+              isError: true);
+              return;
             }
-
             if (state is AvailabilityError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Error: ${state.message}',
-                  ),
-                ),
+              AppSnackBar.show(context, 'Error: ${state.message}',
+                isError: true,
               );
+              return;
             }
           },
           builder: (context, state) {
@@ -328,7 +304,7 @@ class _ConfigureAvailabilityPageState
                 const SizedBox(height: 24),
 
                 const Text(
-                  '1. Horario de atención',
+                  'Horarios',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -428,7 +404,7 @@ class _ConfigureAvailabilityPageState
                 const SizedBox(height: 24),
 
                 const Text(
-                  '2. Precios del día',
+                  'Precios',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
