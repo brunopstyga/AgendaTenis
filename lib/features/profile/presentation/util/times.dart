@@ -1,4 +1,29 @@
 class Times {
+  // Método 1: Para comparar en la grilla (devuelve la hora en formato 24hs)
+  static int convert12HourTo24(String timeSlotStr) {
+    try {
+      final startTimePart = timeSlotStr.split('-')[0].trim();
+
+      if (!startTimePart.toUpperCase().contains('AM') && !startTimePart.toUpperCase().contains('PM')) {
+        return int.tryParse(startTimePart.split(':')[0]) ?? -1;
+      }
+
+      final parts = startTimePart.split(' ');
+      if (parts.length < 2) return -1;
+
+      final hm = parts[0].split(':');
+      int hour = int.parse(hm[0]);
+      final modifier = parts[1].toUpperCase();
+
+      if (modifier == 'PM' && hour < 12) hour += 12;
+      if (modifier == 'AM' && hour == 12) hour = 0;
+      return hour;
+    } catch (_) {
+      return -1;
+    }
+  }
+
+  // Método 2: Para calcular el horario de fin (devuelve un String formateado)
   static String calculateEndTime(String startTimeSlot) {
     try {
       final cleaned = startTimeSlot.trim().toUpperCase();
