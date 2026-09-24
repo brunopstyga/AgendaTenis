@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../bloc/lessons_bloc.dart';
 import '../bloc/lessons_state.dart';
 import '../components/app_snack_bar.dart';
@@ -37,11 +38,9 @@ class LessonsGridPage extends StatelessWidget {
       return '${startHour.toString().padLeft(2, '0')}:00 - ${endHour.toString().padLeft(2, '0')}:00';
     });
 
-    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Grilla Semanal Completa'),
+        title: const Text(AppStrings.weeklyGridTitle),
         automaticallyImplyLeading: false,
         leading: Builder(
           builder: (context) => IconButton(
@@ -82,12 +81,12 @@ class LessonsGridPage extends StatelessWidget {
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columns: [
                     const DataColumn(
-                      label: Text('Horario', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: Text(AppStrings.scheduleColumnLabel, style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     for (int i = 0; i < weekDates.length; i++)
                       DataColumn(
                         label: Text(
-                          '${dayNames[i]} ${weekDates[i].day}',
+                          '${AppStrings.weekDayNames[i]} ${weekDates[i].day}',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -102,7 +101,7 @@ class LessonsGridPage extends StatelessWidget {
                           DataCell(
                             GridCellWidget(
                               slots: state.slots,
-                              dayName: dayNames[i],
+                              dayName: AppStrings.weekDayNames[i],
                               timeRange: timeRange,
                             ),
                           ),

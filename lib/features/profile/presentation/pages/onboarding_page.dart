@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
 import '../bloc/lessons_bloc.dart';
 import '../bloc/lessons_intent.dart';
@@ -29,8 +30,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   late String _currentSelectedDay;
   String? _selectedTimeSlot;
-  String _selectedLevel = 'Básico';
-  String _selectedClassType = 'Grupal';
+  String _selectedLevel = AppStrings.defaultLevel;
+  String _selectedClassType = AppStrings.defaultClassType;
   double _basePriceFromTeacher = 20.0;
 
   List<String> _availableTimeSlots = [];
@@ -55,8 +56,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
       final dayData = state.schedule[_currentSelectedDay] ??
           state.schedule[_currentSelectedDay.toLowerCase()] ?? {};
 
-      final String startHour = dayData['startTime'] ?? '08:00';
-      final String endHour = dayData['endTime'] ?? '21:00';
+      final String startHour = dayData['startTime'] ?? AppStrings.defaultStartHour;
+      final String endHour = dayData['endTime'] ?? AppStrings.defaultEndHour;
 
       final Map<String, dynamic> rawPrices = dayData['prices'] ?? {};
       _currentDayClassPrices = rawPrices.map((key, value) => MapEntry(key, (value as num).toDouble()));
@@ -104,7 +105,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         userId: widget.user.id,
         title: titleDetails,
         date: _currentSelectedDay,
-        timeSlot: _selectedTimeSlot ?? '08:00 - 09:00',
+        timeSlot: _selectedTimeSlot ?? AppStrings.defaultTimeSlot,
         totalSpots: maxSpots,
         availableSpots: available,
         isBooked: true,
@@ -143,7 +144,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         builder: (context, availabilityState) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Configura tu Perfil y Turno'),
+              title: const Text(AppStrings.onboardingTitle),
               automaticallyImplyLeading: false,
             ),
             body: Padding(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../bloc/lessons_bloc.dart';
 import '../bloc/lessons_state.dart';
 import '../util/input_validators.dart';
@@ -20,7 +21,7 @@ class DailySchedulePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Planilla del Día'),
+        title: const Text(AppStrings.dailyScheduleTitle),
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
       ),
@@ -30,7 +31,7 @@ class DailySchedulePage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (state.errorMessage != null) {
-            return Center(child: Text('Error: ${state.errorMessage}'));
+            return Center(child: Text('${AppStrings.errorLabel}: ${state.errorMessage}'));
           }
 
 
@@ -62,10 +63,10 @@ class DailySchedulePage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    DailyMetricCard(title: 'Total', value: '$totalCount', icon: Icons.schedule),
-                    DailyMetricCard(title: 'Ocupados', value: '$occupiedCount', icon: Icons.person),
-                    DailyMetricCard(title: 'Libres', value: '$freeCount', icon: Icons.event_available),
-                    DailyMetricCard(title: 'Recaudado',
+                    DailyMetricCard(title: '$totalCount', value: '$totalCount', icon: Icons.schedule),
+                    DailyMetricCard(title: '$occupiedCount', value: '$occupiedCount', icon: Icons.person),
+                    DailyMetricCard(title: '$freeCount', value: '$freeCount', icon: Icons.event_available),
+                    DailyMetricCard(title: AppStrings.revenueMetric,
                         value: '\$${_formatCurrency(totalRevenue)}',
                         icon: Icons.attach_money),
                   ],
@@ -77,7 +78,7 @@ class DailySchedulePage extends StatelessWidget {
               // Lista de turnos desacoplada
               Expanded(
                 child: slots.isEmpty
-                    ? Center(child: Text('No hay registros para este día ($targetDay)'))
+                    ? Center(child: Text('${AppStrings.noRecordsForDay} ($targetDay)'))
                     : ListView.separated(
                   itemCount: slots.length,
                   separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
 import '../bloc/login/login_bloc.dart';
 import '../bloc/login/login_intent.dart';
@@ -52,7 +53,7 @@ class _LoginViewState extends State<_LoginView> {
     if (email.isEmpty || password.isEmpty) {
       AppSnackBar.show(
         context,
-        'Por favor completa los campos obligatorios',
+        AppStrings.fillMandatoryFieldsError,
         isError: true,
       );
       return;
@@ -72,14 +73,14 @@ class _LoginViewState extends State<_LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isRegistering ? 'Registro de Usuario' : 'Iniciar Sesión'),
+      appBar: AppBar(title: Text(_isRegistering ? AppStrings.registerTitle : AppStrings.loginTitle),
       centerTitle: true,),
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
             LoginNavigationHandler.handleLoginSuccess(context, state);
           } else if (state is RegisterSuccess) {
-            AppSnackBar.show(context, '¡Registro exitoso! Ya puedes iniciar sesión.');
+            AppSnackBar.show(context, AppStrings.registerSuccessMsg);
             setState(() => _isRegistering = false);
           } else if (state is LoginError) {
                 AppSnackBar.show(context, state.message, isError: true);

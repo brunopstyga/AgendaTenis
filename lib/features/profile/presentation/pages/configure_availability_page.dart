@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
 import '../bloc/availability/AvailabilityIntent.dart';
 import '../bloc/availability/availability_bloc.dart';
@@ -130,7 +131,7 @@ class _ConfigureAvailabilityPageState
     if (startIndex == -1 || endIndex == -1) {
       AppSnackBar.show(
       context,
-      'Horario inválido',
+        AppStrings.invalidScheduleError,
       isError: true,
     );
     return;
@@ -139,7 +140,7 @@ class _ConfigureAvailabilityPageState
     if (startIndex >= endIndex) {
         AppSnackBar.show(
           context,
-            'La hora de finalización debe ser posterior a la de inicio',
+          AppStrings.endBeforeStartError,
           isError: true,
       );
       return;
@@ -152,7 +153,7 @@ class _ConfigureAvailabilityPageState
     });
     AppSnackBar.show(
         context,
-      'Horario de atención actualizado para $_selectedDay',
+      '${AppStrings.dayScheduleUpdatedMsg} $_selectedDay',
     isError: true,);
     return;
   }
@@ -186,7 +187,7 @@ class _ConfigureAvailabilityPageState
     developer.log(
       'Precio $_selectedClassType para $_selectedDay: $price',
     );
-   AppSnackBar.show(context, 'Precio de "$_selectedClassType" para $_selectedDay actualizado a \$$price',
+   AppSnackBar.show(context, '${AppStrings.priceUpdatedMsg} "$_selectedClassType" para $_selectedDay a \$$price',
    isError: true);
    return;
   }
@@ -200,7 +201,7 @@ class _ConfigureAvailabilityPageState
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
-            'Configurar Horarios y Precios',
+              AppStrings.configureAvailabilityTitle,
           ),
           backgroundColor: Colors.green,
           foregroundColor: Colors.white,
@@ -231,12 +232,12 @@ class _ConfigureAvailabilityPageState
             }
             if (state is AvailabilitySavedSuccess) {
               Navigator.pop(context);
-              AppSnackBar.show(context, 'Configuración guardada correctamente',
+              AppSnackBar.show(context, AppStrings.configSavedSuccess,
               isError: true);
               return;
             }
             if (state is AvailabilityError) {
-              AppSnackBar.show(context, 'Error: ${state.message}',
+              AppSnackBar.show(context, '${AppStrings.errorPrefix}${state.message}',
                 isError: true,
               );
               return;
@@ -279,7 +280,7 @@ class _ConfigureAvailabilityPageState
                 DropdownButtonFormField<String>(
                   value: _selectedDay,
                   decoration: const InputDecoration(
-                    labelText: 'Seleccionar día',
+                    labelText: AppStrings.selectDayLabel,
                     border: OutlineInputBorder(),
                   ),
                   items: AvailabilityConstants.daysOfWeek
@@ -304,7 +305,7 @@ class _ConfigureAvailabilityPageState
                 const SizedBox(height: 24),
 
                 const Text(
-                  'Horarios',
+                  AppStrings.scheduleSectionTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -327,7 +328,7 @@ class _ConfigureAvailabilityPageState
                                 value: _startTime,
                                 decoration:
                                 const InputDecoration(
-                                  labelText: 'Desde',
+                                  labelText: AppStrings.startTimeLabel,
                                   border:
                                   OutlineInputBorder(),
                                   isDense: true,
@@ -360,7 +361,7 @@ class _ConfigureAvailabilityPageState
                                 value: _endTime,
                                 decoration:
                                 const InputDecoration(
-                                  labelText: 'Hasta',
+                                  labelText: AppStrings.endTimeLabel,
                                   border:
                                   OutlineInputBorder(),
                                   isDense: true,
@@ -393,7 +394,7 @@ class _ConfigureAvailabilityPageState
                           onPressed:
                           _saveDayConfiguration,
                           child: const Text(
-                            'Actualizar Horario del Día',
+                            AppStrings.updateDayScheduleButton,
                           ),
                         ),
                       ],
@@ -404,7 +405,7 @@ class _ConfigureAvailabilityPageState
                 const SizedBox(height: 24),
 
                 const Text(
-                  'Precios',
+                  AppStrings.pricesSectionTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -423,7 +424,7 @@ class _ConfigureAvailabilityPageState
                           value: _selectedClassType,
                           decoration:
                           const InputDecoration(
-                            labelText: 'Tipo de clase',
+                            labelText:  AppStrings.classTypeLabel,
                             border:
                             OutlineInputBorder(),
                             isDense: true,
@@ -475,7 +476,7 @@ class _ConfigureAvailabilityPageState
                           ],
                           decoration:
                           const InputDecoration(
-                            labelText: 'Precio',
+                            labelText: AppStrings.priceFieldLabel,
                             prefixText: '\$ ',
                             border:
                             OutlineInputBorder(),
@@ -489,7 +490,7 @@ class _ConfigureAvailabilityPageState
                           onPressed:
                           _saveClassTypePrice,
                           child: const Text(
-                            'Guardar Precio',
+                            AppStrings.savePriceButton,
                           ),
                         ),
 
@@ -542,7 +543,7 @@ class _ConfigureAvailabilityPageState
                     color: Colors.white,
                   )
                       : const Text(
-                    'Guardar Toda la Configuración',
+                    AppStrings.saveAllConfigButton,
                     style: TextStyle(
                       fontSize: 16,
                     ),

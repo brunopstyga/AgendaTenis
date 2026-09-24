@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tennis_scheduler/features/profile/presentation/components/app_snack_bar.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
 import '../../presentation/widgets/app_drawer.dart';
 import '../bloc/lessons_bloc.dart';
@@ -160,7 +161,7 @@ class _LessonsViewState extends State<_LessonsView> {
     );
   }
 
-  void _handleShowWeeklySchedule(BuildContext context) => _showSnackBar('Abriendo planilla semanal completa...');
+  void _handleShowWeeklySchedule(BuildContext context) => _showSnackBar(AppStrings.openingWeeklyScheduleMsg);
 
   void _handleConfigureAvailability(BuildContext context) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ConfigureAvailabilityPage()));
@@ -206,15 +207,15 @@ class _LessonsViewState extends State<_LessonsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isTeacher ? 'Agenda (Profesor)' : 'Agenda (Alumno)'),
+        title: Text(_isTeacher ? AppStrings.teacherAgendaTitle : AppStrings.studentAgendaTitle),
       ),
       drawer: AppDrawer(
         isTeacher: _isTeacher,
         onShowGridPage: () => _handleShowGridPage(context),
         onLoginLocal: () => _handleLoginLocal(context),
-        onShowDailySchedule: _isTeacher ? () => _handleShowDailySchedule(context) : () => _showSnackBar('Acceso exclusivo para profesores'),
-        onShowWeeklySchedule: _isTeacher ? () => _handleShowWeeklySchedule(context) : () => _showSnackBar('Acceso exclusivo para profesores'),
-        onConfigureAvailability: _isTeacher ? () => _handleConfigureAvailability(context) : () => _showSnackBar('Acceso exclusivo para profesores'),
+        onShowDailySchedule: _isTeacher ? () => _handleShowDailySchedule(context) : () => _showSnackBar(AppStrings.teacherOnlyAccessMsg),
+        onShowWeeklySchedule: _isTeacher ? () => _handleShowWeeklySchedule(context) : () => _showSnackBar(AppStrings.teacherOnlyAccessMsg),
+        onConfigureAvailability: _isTeacher ? () => _handleConfigureAvailability(context) : () => _showSnackBar(AppStrings.teacherOnlyAccessMsg),
         onLogout: () => _handleLogout(context),
       ),
       body: Column(
@@ -236,7 +237,7 @@ class _LessonsViewState extends State<_LessonsView> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddStudentModal(context),
-        tooltip: _isTeacher ? 'Inscribir Alumno' : 'Reservar Turno',
+        tooltip: _isTeacher ? AppStrings.registerStudentTooltip : AppStrings.bookSlotTooltip,
         child: Icon(_isTeacher ? Icons.person_add : Icons.add),
       )
     );
@@ -259,7 +260,7 @@ class _LessonsViewState extends State<_LessonsView> {
         final filteredSlots = state.slots.where((slot) => slot.date == selectedDayName).toList();
 
         if (filteredSlots.isEmpty) {
-          return Center(child: Text('No hay turnos cargados para el día $selectedDayName'));
+          return Center(child: Text('${AppStrings.noSlotsForDayMsg} $selectedDayName'));
         }
 
         return ListView.builder(
@@ -294,7 +295,8 @@ class _LessonsViewState extends State<_LessonsView> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Horario: ${slot.timeSlot} | Alumno: ${slot.studentName ?? "Sin asignar"}'),
+                    Text('${AppStrings.scheduleLabel}: ${slot.timeSlot}'
+                        ' | ${AppStrings.studentLabel}: ${slot.studentName ?? AppStrings.unassignedLabel}'),
                     const SizedBox(height: 4),
                     Row(
                       children: [

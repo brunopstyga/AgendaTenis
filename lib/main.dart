@@ -7,6 +7,7 @@ import 'features/profile/domain/entity/user_entity.dart';
 import 'features/profile/presentation/bloc/lessons_bloc.dart';
 import 'features/profile/presentation/pages/lessons_pages.dart';
 import 'features/profile/presentation/pages/login_page.dart';
+import 'firebase_options.dart';
 
 
 void main() async {
@@ -14,7 +15,9 @@ void main() async {
 
   configureDependencies();
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
 
   runApp(const MyApp());
