@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/util/result.dart';
 import '../../domain/repositories/AvailabilityRepository.dart';
 
@@ -113,7 +114,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
 
       return Success(scheduleMap);
     } catch (e) {
-      return Failure('Error al obtener la disponibilidad: $e', e is Exception ? e : null);
+      return Failure('${AppStrings.errorGetRepositoyImpl}: $e', e is Exception ? e : null);
     }
   }
 
@@ -126,7 +127,7 @@ class AvailabilityRepositoryImpl implements AvailabilityRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Failure('Error al guardar la disponibilidad: $e');
+      return Failure('${AppStrings.errorSaveRepositoyImpl}: $e');
     }
   }
 }

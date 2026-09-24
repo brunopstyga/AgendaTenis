@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/database/lesson_slots_table.dart';
 import '../../../../core/util/result.dart';
 import '../../domain/repositories/i_lesson_repository.dart';
@@ -139,7 +140,7 @@ class LessonRepository implements ILessonRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Failure('Error al actualizar el turno: $e');
+      return Failure('${AppStrings.errorUpdateRepositoyImpl}: $e');
     }
   }
 
@@ -149,7 +150,7 @@ class LessonRepository implements ILessonRepository {
       await _firestore.collection(_collection).doc(id).delete();
       return const Success(null);
     } catch (e) {
-      return Failure('Error al eliminar el turno: $e');
+      return Failure('${AppStrings.errorDeleteRepositoyImpl}: $e');
     }
   }
 }

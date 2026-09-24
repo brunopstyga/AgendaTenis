@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:injectable/injectable.dart';
+import 'package:tennis_scheduler/core/constants/app_strings.dart';
 import '../../../../core/util/result.dart';
 import '../../domain/entity/user_entity.dart';
 import '../../domain/repositories/repository_login_user.dart';
@@ -19,7 +20,7 @@ class LoginDataRepositoryImpl implements RepositoryLoginUser {
       );
 
       if (credential.user == null) {
-        return const Failure('No se pudo obtener el usuario de la autenticación.');
+        return const Failure(AppStrings.authNotFoundFailure);
       }
 
       DocumentSnapshot userDoc = await _firestore
@@ -28,7 +29,7 @@ class LoginDataRepositoryImpl implements RepositoryLoginUser {
           .get();
 
       if (!userDoc.exists || userDoc.data() == null) {
-        return const Failure('El usuario no existe en la base de datos.');
+        return const Failure(AppStrings.userDocNotFoundFailure);
       }
 
       final userEntity = UserEntity.fromMap(
@@ -38,7 +39,7 @@ class LoginDataRepositoryImpl implements RepositoryLoginUser {
 
       return Success(userEntity);
     } catch (e) {
-      return Failure('Error al iniciar sesión: $e');
+      return Failure('${AppStrings.notCreateSesion}: $e');
     }
   }
 
@@ -52,7 +53,7 @@ class LoginDataRepositoryImpl implements RepositoryLoginUser {
 
       User? firebaseUser = credential.user;
       if (firebaseUser == null) {
-        return const Failure('Error al crear el usuario en Auth.');
+        return const Failure(AppStrings.authNotFoundFailure);
       }
 
       await _firestore.collection('users').doc(firebaseUser.uid).set({
@@ -65,7 +66,7 @@ class LoginDataRepositoryImpl implements RepositoryLoginUser {
 
       return const Success(true);
     } catch (e) {
-      return Failure('Error en el registro: $e');
+      return Failure('${AppStrings.errorRegister}: $e');
     }
   }
 }

@@ -71,4 +71,16 @@ class AppStrings {
   static const String defaultEndHour = '21:00';
   static const String defaultTimeSlot = '08:00 - 09:00';
 
+  static const String errorGetRepositoyImpl ='Error al obtener la disponibilidad';
+  static const String errorSaveRepositoyImpl ='Error al guardar la disponibilidad:';
+  static const String errorUpdateRepositoyImpl ='Error al actualizar el turno';
+  static const String errorDeleteRepositoyImpl ='Error al eliminar el turno';
+
+  static const String usersCollection = 'users';
+  static const String authNotFoundFailure = 'No se pudo obtener el usuario de la autenticación.';
+  static const String userDocNotFoundFailure = 'El usuario no existe en la base de datos.';
+  static const String authCreateFailure = 'Error al crear el usuario en Auth.';
+  static const String notCreateSesion = 'Error al iniciar sesión.';
+  static const String errorRegister = 'Error en el registro';
+
 }
